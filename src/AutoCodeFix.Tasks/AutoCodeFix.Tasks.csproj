@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net46</TargetFramework>
+    <RootNamespace>AutoCodeFix</RootNamespace>
+    <LangVersion>Latest</LangVersion>
+
+    <PrimaryOutputKind>Build</PrimaryOutputKind>
+    <InferPackageContents>false</InferPackageContents>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <CopyNuGetImplementations>true</CopyNuGetImplementations>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <PackageReference>
+      <PrivateAssets>all</PrivateAssets>
+      <Pack>false</Pack>
+    </PackageReference>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <None Remove="AutoCodeFix.Core.targets" />
+    <None Remove="AutoCodeFix.DesignTime.targets" />
+    <None Remove="AutoCodeFix.targets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="AutoCodeFix.targets" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="AutoCodeFix.Core.targets" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="AutoCodeFix.DesignTime.targets" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+
+    <PackageReference Include="Microsoft.Build" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="$(MicrosoftBuildVersion)" ExcludeAssets="runtime" />
+
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Features" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces" Version="$(RoslynVersion)" />
+
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.0.4" />
+    <PackageReference Include="StreamJsonRpc" Version="1.3.23" />
+    <PackageReference Include="Xamarin.Build.AsyncTask" Version="0.2.10" Pack="true" />
+  </ItemGroup>
+
+  <Target Name="AddPackageContents" BeforeTargets="GetPackageContents">
+    <ItemGroup>
+      <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))AutoCodeFix*.*" Kind="$(PrimaryOutputKind)" />
+      <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))Xamarin.Build.AsyncTask*.*" Kind="$(PrimaryOutputKind)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

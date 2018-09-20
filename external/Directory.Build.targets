@@ -1,0 +1,9 @@
+<Project>
+
+  <PropertyGroup>
+    <EnableSourceLink>false</EnableSourceLink>
+    <SourceControlInformationFeatureSupported>false</SourceControlInformationFeatureSupported>
+    <SourceLink />
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,84 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28105.52
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCodeFix", "src\AutoCodeFix\AutoCodeFix.csproj", "{B070517E-8D67-4E58-A580-513DFBC6B65F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCodeFix.ProjectReader", "src\AutoCodeFix.ProjectReader\AutoCodeFix.ProjectReader.csproj", "{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCodeFix.Tasks", "src\AutoCodeFix.Tasks\AutoCodeFix.Tasks.csproj", "{135CD01C-AC26-4FA4-99AD-B490AFA8B062}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3836DA4E-9300-4587-8C82-0399EB7350D1}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.targets = src\Directory.Build.targets
+		NuGet.Config = NuGet.Config
+		README.md = README.md
+		VERSION = VERSION
+		src\Version.targets = src\Version.targets
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCodeFix.Tests", "src\AutoCodeFix.Tests\AutoCodeFix.Tests.csproj", "{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}"
+	ProjectSection(ProjectDependencies) = postProject
+		{91F9A526-E62C-491B-8774-88A61BDF1E1A} = {91F9A526-E62C-491B-8774-88A61BDF1E1A}
+	EndProjectSection
+EndProject
+Project("{5DD5E4FA-CB73-4610-85AB-557B54E96AA9}") = "AutoCodeFix.Package", "src\AutoCodeFix.Package\AutoCodeFix.Package.nuproj", "{91F9A526-E62C-491B-8774-88A61BDF1E1A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gherkinator", "Gherkinator", "{45AD3328-A714-4CE9-B47D-7097D7676283}"
+	ProjectSection(SolutionItems) = preProject
+		external\Gherkinator\src\Directory.Build.props = external\Gherkinator\src\Directory.Build.props
+		external\Gherkinator\src\Directory.Build.targets = external\Gherkinator\src\Directory.Build.targets
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gherkinator", "external\Gherkinator\src\Gherkinator\Gherkinator.csproj", "{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gherkinator.MSBuild", "external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.csproj", "{7B1FCAD4-5BB6-4455-894A-840023BDC421}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B070517E-8D67-4E58-A580-513DFBC6B65F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B070517E-8D67-4E58-A580-513DFBC6B65F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B070517E-8D67-4E58-A580-513DFBC6B65F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B070517E-8D67-4E58-A580-513DFBC6B65F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{135CD01C-AC26-4FA4-99AD-B490AFA8B062}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{135CD01C-AC26-4FA4-99AD-B490AFA8B062}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{135CD01C-AC26-4FA4-99AD-B490AFA8B062}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{135CD01C-AC26-4FA4-99AD-B490AFA8B062}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8} = {45AD3328-A714-4CE9-B47D-7097D7676283}
+		{7B1FCAD4-5BB6-4455-894A-840023BDC421} = {45AD3328-A714-4CE9-B47D-7097D7676283}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0D057138-81AC-4232-B280-867A24BA4E13}
+	EndGlobalSection
+EndGlobal

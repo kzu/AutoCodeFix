@@ -1,0 +1,59 @@
+<Project>
+
+  <PropertyGroup>
+    <GitThisAssemblyMetadata>false</GitThisAssemblyMetadata>
+    <GitVersionFile>$(MSBuildThisFileDirectory)..\VERSION</GitVersionFile>
+    <GitSkipCache>true</GitSkipCache>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateNuspecDependsOn>SetVersions;$(GenerateNuspecDependsOn)</GenerateNuspecDependsOn>
+    <GetPackageVersionDependsOn>SetVersions;$(GetPackageVersionDependsOn)</GetPackageVersionDependsOn>
+  </PropertyGroup>
+
+  <Target Name="SetVersions"
+          BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetPackageVersion;Pack"
+          DependsOnTargets="GitVersion"
+          Returns="$(Version)"
+          Condition="'$(GitInfoImported)' == 'true' And '$(ExcludeRestorePackageImports)' != 'true'">
+    
+    <PropertyGroup>
+      <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' != ''">$(SYSTEM_PULLREQUEST_TARGETBRANCH)</GitBranch>
+      <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' == '' and '$(BUILD_SOURCEBRANCHNAME)' != ''">$(BUILD_SOURCEBRANCHNAME)</GitBranch>
+      <GitBranch Condition="'$(APPVEYOR_REPO_BRANCH)' != ''">$(APPVEYOR_REPO_BRANCH)</GitBranch>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <VersionMetadata Include="$(GitCommits)"/>
+
+      <VersionMetadata Condition="$(CI) and '$(BUILD_REASON)' == 'PullRequest'"
+                       Include="pr.$(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"/>
+
+      <VersionMetadata Include="sha.$(GitCommit)"/>
+
+      <VersionMetadata Condition="$(CI)" 
+                       Include="vsts.$(BUILD_BUILDID)"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <VersionMetadataLabel>@(VersionMetadata -> '%(Identity)', '-')</VersionMetadataLabel>
+      <VersionMetadataPlusLabel Condition="'$(VersionMetadataLabel)' != ''">+$(VersionMetadataLabel)</VersionMetadataPlusLabel>
+      <PackageVersion>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)$(GitSemVerDashLabel)</PackageVersion>
+      <Version>$(PackageVersion)$(VersionMetadataPlusLabel)</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadata">
+        <_Parameter1>Version</_Parameter1>
+        <_Parameter2>$(Version)</_Parameter2>
+      </AssemblyAttribute>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadata">
+        <_Parameter1>PackageVersion</_Parameter1>
+        <_Parameter2>$(PackageVersion)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+
+    <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(Version)"/>
+  </Target>
+  
+</Project>

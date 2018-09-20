@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.3</TargetFramework>
+    <PackageId>AutoCodeFix.Core</PackageId>
+    <IsPackable>false</IsPackable>
+    <InferPackageContents>true</InferPackageContents>
+    <IncludeOutputsInPackage>false</IncludeOutputsInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="$(RoslynVersion)" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="AutoCodeFix.cs" Pack="true" />
+    <Content Include="AutoCodeFix.cs" Pack="true" PackagePath="contentFiles\cs\$(TargetFramework)\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

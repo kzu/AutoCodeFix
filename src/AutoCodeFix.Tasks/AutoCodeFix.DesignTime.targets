@@ -1,0 +1,27 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- See https://github.com/xamarin/xamarin-android/commit/18b8a5270969feb063f1e2926ca9a58099aabfa9 -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      _EnsureDesignTimeBuildForBuild;
+      $(BuildDependsOn)
+    </BuildDependsOn>
+    <CompileDependsOn>
+      _EnsureDesignTimeBuildForCompile;
+      $(CompileDependsOn)
+    </CompileDependsOn>
+  </PropertyGroup>
+
+  <Target Name="_EnsureDesignTimeBuildForBuild">
+    <PropertyGroup>
+      <DesignTimeBuild Condition="'$(DesignTimeBuild)' == ''">false</DesignTimeBuild>
+    </PropertyGroup>    
+  </Target>
+
+  <Target Name="_EnsureDesignTimeBuildForCompile">
+    <PropertyGroup>
+      <DesignTimeBuild Condition="'$(DesignTimeBuild)' == ''">true</DesignTimeBuild>
+    </PropertyGroup>    
+  </Target>
+
+</Project>

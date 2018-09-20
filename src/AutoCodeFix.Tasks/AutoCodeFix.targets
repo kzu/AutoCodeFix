@@ -1,0 +1,96 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="RecordAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="CollectAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
+
+  <PropertyGroup>
+    <!-- AutoCodeFix, by default, will not run at all unless Compile emits warnings that have 
+       a corresponding @(AutoCodeFix) item. This is typically the desired behavior, since 
+       most code fixes will be applied directly in the IDE as the developer builds the code.
+       
+       When matching warnings are found, however, the code needs to be loaded, analyzed, 
+       those same diagnostics need to be produced, the code fixes applied, and then another 
+       Compile must run so that the updated code is included in the final output. 
+       
+       Compiling twice is arguably worse than compiling once :), which is precisely what the 
+       $(AutoCodeFixBeforeCompile) controls. When set to 'true', this property will cause 
+       analyis and code fix to run always before compile, therefore reducing the Compile 
+       execution to just one. Of course, the trade-off is that now, if no diagnostics needed 
+       code fixing, the whole code loading and analysis was unnecessary, slowing down the 
+       build too. 
+
+       Packages that use AutoCodeFix to generate code into the intermediate output path 
+       may want to opt-in to this behavior, however, since it guarantees that generated 
+       code is always up-to-date by the time Compile runs.
+  -->
+    <AutoCodeFixBeforeCompile Condition="'$(AutoCodeFixBeforeCompile)' == ''">false</AutoCodeFixBeforeCompile>
+
+    <!-- Disables all AutoCodeFix behavior, to compare before/after build performance, for example. -->
+    <DisableAutoCodeFix Condition="'$(DisableAutoCodeFix)' == ''">false</DisableAutoCodeFix>
+
+    <!-- Launches a debugger before executing the AutoCodeFix task, for troubleshooting/diagnostics purposes -->
+    <DebugAutoCodeFix Condition="'$(DebugAutoCodeFix)' == ''">false</DebugAutoCodeFix>
+    <!-- Launches a debugger when starting the ProjectReader console app, for troubleshooting/diagnostics purposes -->
+    <DebugProjectReader Condition="'$(DebugProjectReader)' == ''">false</DebugProjectReader>
+
+    <!-- Path to the ProjectReader executable and its dependencies. -->
+    <AutoCodeFixToolsPath Condition="'$(AutoCodeFixToolsPath)' == ''">$(MSBuildThisFileDirectory)..\tools</AutoCodeFixToolsPath>
+  </PropertyGroup>
+
+  <!-- These targets ensure the $(DesignTimeBuild) property is always set and can be relied on -->
+  <Import Project="AutoCodeFix.DesignTime.targets"/>
+  <Import Project="AutoCodeFix.Core.targets" Condition="'$(DisableAutoCodeFix)' != 'true'"/>
+
+  <!-- This target sets the 'AutoCodeFix' environment variable to 'true' so that analyzers and
+       code fixers can detect that AutoCodeFix is actively recording warnings for fixup purposes. 
+       Typically, an analyzer would use this environment variable to turn on/off diagnostics, or 
+       make them hidden instead of warnings for actual builds and not design-time builds, since 
+       users might not have an option to avoid applying the code fixes (i.e. they are for automatic 
+       code generation instead of actual code warnings that users should fix). -->
+  <Target Name="_SetAutoCodeFixEnvironment" BeforeTargets="CoreCompile">
+    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
+  </Target>
+
+  <!-- Persists settings for the code fixers to know the intermediate output path or other values from the project.
+       Unlike the other "private" targets that start with "_", this target is intended for public consumption in 
+       BeforeTargets, so that dynamically calculated @(AutoFixSetting) can be added before the save happens. 
+       
+       Note, however, that the incremental build will only consider $(MSBuildAllProjects) by default. If the custom 
+       settings are calculated from other files that need to be added to the incremental runs of this target, append 
+       them to the $(AdditionalAutoFixSettingsInputs) property.
+  -->
+  <Target Name="SaveAutoFixSettings"
+          BeforeTargets="_ApplyCodeFixBeforeCompile;_ApplyCodeFixAfterCompile;Compile;CompileDesignTime"
+          Inputs="$(MSBuildAllProjects);$(AdditionalAutoFixSettingsInputs)" 
+          Outputs="$(_AutoCodeFixIni)">
+
+    <ItemGroup>
+      <!-- These values are always persisted, since they are generally useful. -->
+      <AutoFixSetting Include="BaseIntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(BaseIntermediateOutputPath)))" />
+      <AutoFixSetting Include="IntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(IntermediateOutputPath)))" />
+      <AutoFixSetting Include="AutoFix" Value="@(AutoFix)" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_AutoCodeFixIni)" Overwrite="true" 
+                      Lines="@(AutoFixSetting -> '%(Identity)=%(Value)', '$(_NewLineSeparator)')" />
+    <ItemGroup>
+      <FileWrites Include="$(_AutoCodeFixIni)" />
+      <!-- By adding the file to @(AdditionalFiles), we get it passed automatically to code fixes in the IDE 
+           as well as to our invocations to ApplyCodeFixes task. -->
+      <AdditionalFiles Include="$(_AutoCodeFixIni)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- When we explicitly invoke MSBuild from _ApplyCodeFixAfterCompile after applying the code fixes, we want 
+       to force the compilers to consider the auto-fixable diagnostics as errors, since their presence will indicate 
+       that the diagnostic could not be auto-fixed. TODO: maybe provide a better error message in that case somehow? -->
+  <Target Name="_SetAutoFixWarningsAsErrors" BeforeTargets="CoreCompile" Condition="'$(AutoFixWarningsAsErrors)' == 'true'">
+    <PropertyGroup>
+      <WarningsAsErrors>$(WarningsAsErrors);@(AutoFix)</WarningsAsErrors>
+    </PropertyGroup>
+  </Target>
+
+</Project>

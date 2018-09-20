@@ -1,0 +1,3 @@
+[submodule "external/Gherkinator"]
+	path = external/Gherkinator
+	url = ../../kzu/Gherkinator.git

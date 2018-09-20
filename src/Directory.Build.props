@@ -1,0 +1,35 @@
+<Project>
+
+  <PropertyGroup Condition="'$(CI)' == ''">
+    <CI>false</CI>
+    <CI Condition="'$(TF_BUILD)' == 'true'">true</CI>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Metadata">
+    <Authors>kzu</Authors>
+    <Owners>kzu</Owners>
+
+    <PackageProjectUrl>https://github.com/kzu/AutoCodeFix/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/kzu/AutoCodeFix/blob/master/LICENSE</PackageLicenseUrl>
+    <Copyright>Copyright © 2018 Daniel Cazzulino</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Build">
+    <LangVersion>Latest</LangVersion>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <IncludeFrameworkReferencesInPackage>false</IncludeFrameworkReferencesInPackage>
+    <PackageOutputPath>..\out</PackageOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <MicrosoftBuildVersion Condition="'$(MicrosoftBuildVersion)' == ''">15.7.179</MicrosoftBuildVersion>
+    <RoslynVersion Condition="'$(RoslynVersion)' == ''">2.9.0</RoslynVersion>
+    <XunitVersion Condition="'$(XunitVersion)' == ''">2.4.0</XunitVersion>
+  </PropertyGroup>
+
+</Project>
