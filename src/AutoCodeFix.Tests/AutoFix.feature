@@ -180,7 +180,7 @@ public static class Program
     And Rules.ruleset = 
 """
 <RuleSet Name="Rules" ToolsVersion="15.0">
-  <Rules AnalyzerId="RefactoringEssentials" RuleNamespace="RefactoringEssentials">
+  <Rules AnalyzerId="Roslynator.CSharp.Analyzers" RuleNamespace="Roslynator.CSharp.Analyzers">
     <Rule Id="RCS1003" Action="Warning" />
   </Rules>
 </RuleSet>
