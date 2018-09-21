@@ -23,6 +23,14 @@ steps:
     solution: AutoCodeFix.sln
     msbuildArguments: /bl:"$(Build.ArtifactStagingDirectory)\build.binlog" /p:PackageOutputPath=$(Build.ArtifactStagingDirectory) /p:Configuration=Release
 
+- task: VSTest@2
+  displayName: Test
+  inputs:
+    testAssemblyVer2: src\AutoCodeFix.Tests\bin\*\AutoCodeFix.Tests.dll
+    runInParallel: 'true'
+    codeCoverageEnabled: 'true'
+    publishRunAttachments: 'true'
+
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   inputs:
