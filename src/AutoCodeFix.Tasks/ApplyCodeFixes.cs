@@ -143,6 +143,15 @@ namespace AutoCodeFix
                     return;
                 }
 
+                // Report errors for the fixable ids that don't have a corresponding analyzer.
+                unfixable = fixableIds.Where(id => !analyzers.Any(x => x.SupportedDiagnostics.Any(d => d.Id == id))).ToArray();
+                if (unfixable.Any())
+                {
+                    LogCodedError(nameof(Resources.ACF010), Resources.ACF010, string.Join(", ", unfixable));
+                    Cancel();
+                    return;
+                }
+
                 fixableIds = new HashSet<string>(fixableIds.Where(id => allProviders.ContainsKey(id)));
                 var additionalFiles = ImmutableArray.Create(AdditionalFiles == null ? Array.Empty<AdditionalText>() :
                     AdditionalFiles.Select(x => AdditionalTextFile.Create(x.GetMetadata("FullPath"))).ToArray());
@@ -223,6 +232,10 @@ namespace AutoCodeFix
                             if (applyChanges != null)
                             {
                                 applyChanges.Apply(workspace, Token);
+                                // According to https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/935 and 
+                                // https://github.com/dotnet/roslyn-sdk/issues/140, Sam Harwell mentioned that we should 
+                                // be forcing a re-parse of the document syntax tree at this point. If this comes up 
+                                // in the future, implement their approach. For now, I couldn't reproduce any issues.
                                 fixApplied = true;
 
                                 watch.Stop();

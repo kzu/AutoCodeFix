@@ -140,5 +140,14 @@ namespace AutoCodeFix.Properties {
                 return ResourceManager.GetString("ACF009", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No analyzer supporting auto fix {0} was found..
+        /// </summary>
+        internal static string ACF010 {
+            get {
+                return ResourceManager.GetString("ACF010", resourceCulture);
+            }
+        }
     }
 }

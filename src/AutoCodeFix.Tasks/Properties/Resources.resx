@@ -144,4 +144,7 @@
   <data name="ACF009" xml:space="preserve">
     <value>Auto fix {0} was specified as NoWarn and therefore cannot be fixed.</value>
   </data>
+  <data name="ACF010" xml:space="preserve">
+    <value>No analyzer supporting auto fix {0} was found.</value>
+  </data>
 </root>

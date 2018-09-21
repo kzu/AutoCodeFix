@@ -37,7 +37,8 @@
     <ItemGroup>
       <NoWarnAutoFix Include="@(AutoFix)" Condition="$(NoWarn.Contains('%(Identity)'))" />
     </ItemGroup>
-    <Warning Code="ACF009" Text="Auto fix {0} is included in the NoWarn property and therefore cannot not be fixed." />
+    <Warning Code="ACF009" Text="Auto fix %(NoWarnAutoFix.Identity} is included in the NoWarn property and therefore cannot not be fixed."
+             Condition="'@(NoWarnAutoFix)' != ''"/>
   </Target>
 
   <!-- This target will run if AutoCodeFixBeforeCompile==true or when the IDE-run code fixers signal 
@@ -54,6 +55,7 @@
                                 CodeAnalysisRuleSetDirectories="$(CodeAnalysisRuleSetDirectories)"
                                 MSBuildProjectDirectory="$(MSBuildProjectDirectory)">
       <Output TaskParameter="ResolvedCodeAnalysisRuleSet" PropertyName="ResolvedCodeAnalysisRuleSet" />
+      <Output TaskParameter="ResolvedCodeAnalysisRuleSet" ItemName="CustomAdditionalCompileInputs" />
     </ResolveCodeAnalysisRuleSet>
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
@@ -104,9 +106,7 @@
        if any @(AutoFixWarning) was collected, it needs to run CoreCompile again on the same project, but this 
        time making sure it doesn't run again (to avoid infinite recursion).         
   -->
-  <Target Name="_ApplyCodeFixAfterCompile"
-          DependsOnTargets="CoreCompile;_CollectAutoFixWarnings"
-          Condition="'@(AutoFixWarning)' != ''">
+  <Target Name="_ApplyCodeFixAfterCompile" Condition="'@(AutoFixWarning)' != ''">
 
     <ItemGroup>
       <!-- To aid in diagnosing what's been collected, log the distinct warning messages -->
@@ -134,6 +134,7 @@
                                 CodeAnalysisRuleSetDirectories="$(CodeAnalysisRuleSetDirectories)"
                                 MSBuildProjectDirectory="$(MSBuildProjectDirectory)">
       <Output TaskParameter="ResolvedCodeAnalysisRuleSet" PropertyName="ResolvedCodeAnalysisRuleSet" />
+      <Output TaskParameter="ResolvedCodeAnalysisRuleSet" ItemName="CustomAdditionalCompileInputs" />
     </ResolveCodeAnalysisRuleSet>
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"

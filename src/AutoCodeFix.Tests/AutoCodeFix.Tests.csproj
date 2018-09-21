@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="NETStandard.Library" Version="2.0.0" />
-    <PackageReference Include="InjectModuleInitializer" Version="2.0.0" IncludeAssets="none" />
+    <PackageReference Include="InjectModuleInitializer" Version="2.0.0" />
     <PackageReference Include="MSBuilder.GenerateAssemblyInfo" Version="0.2.1" />
     <PackageReference Include="MSBuilder.ThisAssembly.Metadata" Version="0.1.3" />
 
@@ -42,15 +42,10 @@
   </ItemGroup>
 
   <Target Name="CopyAutoCodeFixLayout" AfterTargets="Build">
-    <MSBuild Projects="..\AutoCodeFix.Package\AutoCodeFix.Package.nuproj"
-             Targets="GetPackageContents"
-             Properties="Configuration=$(Configuration);BuildProjectReferences=false">
-      <Output TaskParameter="TargetOutputs" ItemName="AutoCodeFixContent"/>
+    <MSBuild Projects="..\AutoCodeFix.Package\AutoCodeFix.Package.nuproj" Targets="GetPackageContents" Properties="Configuration=$(Configuration);BuildProjectReferences=false">
+      <Output TaskParameter="TargetOutputs" ItemName="AutoCodeFixContent" />
     </MSBuild>
-    <Copy SourceFiles="@(AutoCodeFixContent)" 
-          DestinationFiles="@(AutoCodeFixContent -> '$(OutputPath)AutoCodeFix\%(PackagePath)')" 
-          Condition="'%(AutoCodeFixContent.Kind)' != 'Metadata' and '%(AutoCodeFixContent.Kind)' != 'Dependency'"
-          SkipUnchangedFiles="true"/>
+    <Copy SourceFiles="@(AutoCodeFixContent)" DestinationFiles="@(AutoCodeFixContent -> '$(OutputPath)AutoCodeFix\%(PackagePath)')" Condition="'%(AutoCodeFixContent.Kind)' != 'Metadata' and '%(AutoCodeFixContent.Kind)' != 'Dependency'" SkipUnchangedFiles="true" />
   </Target>
 
   <Import Project="..\..\external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.targets" />
