@@ -9,7 +9,7 @@ steps:
   displayName: Restore
   inputs:
     solution: AutoCodeFix.sln
-    msbuildArguments: /t:Restore /p:Configuration=Release
+    msbuildArguments: /t:Restore /p:Configuration=Release /m
 
 - task: MSBuild@1
   displayName: Version
