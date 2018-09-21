@@ -46,6 +46,21 @@
     <PackageReference Include="Xamarin.Build.AsyncTask" Version="0.2.10" Pack="true" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <Target Name="AddPackageContents" BeforeTargets="GetPackageContents">
     <ItemGroup>
       <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))AutoCodeFix*.*" Kind="$(PrimaryOutputKind)" />

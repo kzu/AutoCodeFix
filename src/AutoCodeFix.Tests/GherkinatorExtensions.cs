@@ -52,12 +52,20 @@ namespace AutoCodeFix
             //        @"%TEMP%\packages;%USERPROFILE%\.nuget\packages;C:\Program Files\dotnet\sdk\NuGetFallbackFolder;https://api.nuget.org/v3/index.json")));
 
         public static void AssertSuccess(this (BuildResult result, IEnumerable<BuildEventArgs>) build)
-            =>  Assert.Equal(BuildResultCode.Success, build.result.OverallResult);
+        {
+            var project = CallContext.GetData("Build.Project", default(string));
+            var target = CallContext.GetData("Build.Target", default(string));
+
+            if (build.result.OverallResult != BuildResultCode.Success)
+                CallContext.GetData<ScenarioState>().MSBuild().OpenLog(project, target);
+
+            Assert.Equal(BuildResultCode.Success, build.result.OverallResult);
+        }
 
         public static void AssertSuccess(this StepContext context, string project = null, string target = null)
         {
-            project = project ?? CallContext<string>.GetData("Build.Project", null);
-            target = target ?? CallContext<string>.GetData("Build.Target", null);
+            project = project ?? CallContext.GetData("Build.Project", default(string));
+            target = target ?? CallContext.GetData("Build.Target", default(string));
 
             var result = context.State.MSBuild().LastBuildResult;
             project = project ?? Path.GetFileName(result.ProjectStateAfterBuild.FullPath);

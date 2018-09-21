@@ -72,6 +72,8 @@ namespace AutoCodeFix
                 case ApplyChangesKind.AddProjectReference:
                 case ApplyChangesKind.AddDocument:
                 case ApplyChangesKind.ChangeDocument:
+                case ApplyChangesKind.ChangeCompilationOptions:
+                case ApplyChangesKind.RemoveDocument:
                     return true;
             }
 
@@ -103,6 +105,19 @@ namespace AutoCodeFix
                     text.Write(writer);
                 }
                 configuration.BuildEngine4.LogMessageEvent(new BuildMessageEventArgs($"{nameof(BuildWorkspace)}.{nameof(ApplyDocumentTextChanged)}: {document.FilePath}", "", nameof(BuildWorkspace), MessageImportance.Low));
+            }
+        }
+
+        protected override void ApplyDocumentRemoved(DocumentId id)
+        {
+            base.ApplyDocumentRemoved(id);
+            var document = CurrentSolution.Projects
+                .FirstOrDefault(p => p.Id == id.ProjectId)?
+                .GetDocument(id);
+
+            if (document != null && File.Exists(document.FilePath))
+            {
+                File.Delete(document.FilePath);
             }
         }
 

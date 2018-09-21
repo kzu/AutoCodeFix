@@ -42,7 +42,7 @@
 
   <!-- These targets ensure the $(DesignTimeBuild) property is always set and can be relied on -->
   <Import Project="AutoCodeFix.DesignTime.targets"/>
-  <Import Project="AutoCodeFix.Core.targets" Condition="'$(DisableAutoCodeFix)' != 'true'"/>
+  <Import Project="AutoCodeFix.Core.targets" Condition="'$(DisableAutoCodeFix)' != 'true'" />
 
   <!-- This target sets the 'AutoCodeFix' environment variable to 'true' so that analyzers and
        code fixers can detect that AutoCodeFix is actively recording warnings for fixup purposes. 

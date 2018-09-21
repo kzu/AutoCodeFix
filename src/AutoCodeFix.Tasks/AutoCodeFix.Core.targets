@@ -12,7 +12,7 @@
     <!-- When writing the .ini file, take into consideration the different line endings depending on the OS -->
     <_NewLineSeparator Condition="'$(OS)' == 'Windows_NT'">%0d</_NewLineSeparator>
     <_NewLineSeparator>$(_NewLineSeparator)%0a</_NewLineSeparator>
-
+    
     <!-- A special case of the $(AutoCodeFixBeforeCompile) property occurs when code fixers run by the IDE 
          detect early on at design-time that AutoCodeFix diagnostics are present in the code. This means 
          that a second compilation can be avoided by flagging this fact to the targets, so that they do 
@@ -33,13 +33,29 @@
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildThisFileDirectory)..\tools" />
   </ItemGroup>
 
+  <Target Name="_ValidateAutoFixNoWarn" BeforeTargets="Compile" Condition="'$(NoWarn)' != ''">
+    <ItemGroup>
+      <NoWarnAutoFix Include="@(AutoFix)" Condition="$(NoWarn.Contains('%(Identity)'))" />
+    </ItemGroup>
+    <Warning Code="ACF009" Text="Auto fix {0} is included in the NoWarn property and therefore cannot not be fixed." />
+  </Target>
+
   <!-- This target will run if AutoCodeFixBeforeCompile==true or when the IDE-run code fixers signal 
        that fixable diagnostics were produced by creating the $(_ApplyCodeFixesFlag) file -->
   <Target Name="_ApplyCodeFixBeforeCompile" 
           BeforeTargets="CoreCompile" 
           Condition="'$(AutoCodeFixBeforeCompile)' == 'true' or
                      ('$(DesignTimeBuild)' != 'true' and Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
+    
     <ResolveLocalAssemblies Condition="'@(AutoFix)' != ''" />
+
+    <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
+                                CodeAnalysisRuleSet="$(CodeAnalysisRuleSet)"
+                                CodeAnalysisRuleSetDirectories="$(CodeAnalysisRuleSetDirectories)"
+                                MSBuildProjectDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ResolvedCodeAnalysisRuleSet" PropertyName="ResolvedCodeAnalysisRuleSet" />
+    </ResolveCodeAnalysisRuleSet>
+
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     ToolsPath="$(AutoCodeFixToolsPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
@@ -49,14 +65,19 @@
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles)"
                     AutoFixIds="@(AutoFix)"
+                    NoWarn="$(NoWarn)"
+                    WarningsAsErrors="$(WarningsAsErrors)"
+                    CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
                     Condition="'@(AutoFix)' != ''" />
+
     <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoFix)' != ''" />
 
     <PropertyGroup>
       <!-- Flag to the Record/Collect targets to skip running. -->
       <_AutoCodeFixesApplied>true</_AutoCodeFixesApplied>
     </PropertyGroup>
+
   </Target>
 
   <!-- In order to detect fixable diagnostics, we set up a logger that records diagnostics emitted by 
@@ -107,6 +128,14 @@
     -->
 
     <ResolveLocalAssemblies />
+
+    <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
+                                CodeAnalysisRuleSet="$(CodeAnalysisRuleSet)"
+                                CodeAnalysisRuleSetDirectories="$(CodeAnalysisRuleSetDirectories)"
+                                MSBuildProjectDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ResolvedCodeAnalysisRuleSet" PropertyName="ResolvedCodeAnalysisRuleSet" />
+    </ResolveCodeAnalysisRuleSet>
+
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     ToolsPath="$(AutoCodeFixToolsPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
@@ -116,6 +145,9 @@
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles)"
                     AutoFixIds="@(AutoFix)"
+                    NoWarn="$(NoWarn)"
+                    WarningsAsErrors="$(WarningsAsErrors)"
+                    CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)" />
 
     <!-- Make sure we build as little as possible here, specifying not to build project 

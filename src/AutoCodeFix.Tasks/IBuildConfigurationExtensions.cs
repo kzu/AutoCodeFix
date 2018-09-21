@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Build.Framework;
+using AutoCodeFix.Properties;
 
 namespace AutoCodeFix
 {
@@ -32,9 +32,10 @@ namespace AutoCodeFix
                             configuration.Log.LogWarning(
                             //configuration.BuildEngine4.LogWarningEvent(new BuildWarningEventArgs(
                                 nameof(AutoCodeFix), 
-                                "ACF001", 
+                                nameof(Resources.ACF001), 
                                 null, null, 0, 0, 0, 0,
-                                $"Analyzer assembly {item.ItemSpec} is incompatible with AutoCodeFix. Must reference Microsoft.CodeAnalyis version {MinRoslynVersion} or greater.");
+                                Resources.ACF001,
+                                item.ItemSpec, nameof(AutoCodeFix), MinRoslynVersion);
                         }
                     }
                     else
@@ -46,9 +47,10 @@ namespace AutoCodeFix
                 {
                     configuration.Log.LogWarning(
                         nameof(AutoCodeFix), 
-                        "ACF002", 
+                        nameof(Resources.ACF002), 
                         null, null, 0, 0, 0, 0,
-                        $"Failed to load analyzer assembly {item.ItemSpec}: {e.Message}");
+                        Resources.ACF002,
+                        item.ItemSpec, e);
                 }
             }
 

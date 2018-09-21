@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoCodeFix.Properties;
 using Microsoft.Build.Framework;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -44,6 +45,12 @@ namespace AutoCodeFix
         public ITaskItem[] Analyzers { get; set; }
 
         public ITaskItem[] AdditionalFiles { get; set; }
+
+        public ITaskItem[] NoWarn { get; set; }
+
+        public ITaskItem[] WarningsAsErrors { get; set; }
+
+        public string CodeAnalysisRuleSet { get; set; }
 
         public bool BuildingInsideVisualStudio { get; set; }
 
@@ -121,7 +128,7 @@ namespace AutoCodeFix
                     .GroupBy(x => x.Id)
                     //.Select(x => new { Id = x.Key, Provider = x.Select(p => p.Provider).First() })
                     .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
-
+                
                 watch.Stop();
                 LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
 
@@ -131,8 +138,7 @@ namespace AutoCodeFix
                 var unfixable = fixableIds.Where(id => !allProviders.ContainsKey(id)).ToArray();
                 if (unfixable.Any())
                 {
-                    LogCodedError("ACF005",
-                        $"Could not locate a CodeFixProvider for the following specified fixable diagnostic ids: {string.Join(", ", unfixable)}.");
+                    LogCodedError(nameof(Resources.ACF005), Resources.ACF005, string.Join(", ", unfixable));
                     Cancel();
                     return;
                 }
@@ -141,12 +147,45 @@ namespace AutoCodeFix
                 var additionalFiles = ImmutableArray.Create(AdditionalFiles == null ? Array.Empty<AdditionalText>() :
                     AdditionalFiles.Select(x => AdditionalTextFile.Create(x.GetMetadata("FullPath"))).ToArray());
 
+                // Process diagnostic options and rule set
+                var diagnosticOptions = new Dictionary<string, ReportDiagnostic>();
+                var reportDiagnostic = ReportDiagnostic.Default;
+                if (!string.IsNullOrEmpty(CodeAnalysisRuleSet))
+                {
+                    reportDiagnostic = RuleSet.GetDiagnosticOptionsFromRulesetFile(CodeAnalysisRuleSet, out diagnosticOptions);
+                }
+
+                // Explicitly supress the diagnostics in NoWarn
+                foreach (var noWarn in NoWarn)
+                {
+                    diagnosticOptions[noWarn.ItemSpec] = ReportDiagnostic.Suppress;
+                }
+                // Explicitly report as errors the specificied WarningsAsErrors
+                foreach (var warnAsError in WarningsAsErrors)
+                {
+                    diagnosticOptions[warnAsError.ItemSpec] = ReportDiagnostic.Error;
+                }
+
+                // Merge with existing compilation options
+                var immutableOptions = diagnosticOptions.ToImmutableDictionary().SetItems(project.CompilationOptions.SpecificDiagnosticOptions);
+                var compilationOptions = project.CompilationOptions.WithSpecificDiagnosticOptions(immutableOptions);
+                // Apply to solution and update project reference.
+
+                if (!workspace.TryApplyChanges(project.Solution.WithProjectCompilationOptions(project.Id, compilationOptions)))
+                {
+                    throw new NotSupportedException();
+                }
+
+                project = workspace.CurrentSolution.GetProject(project.Id);
+
                 watch = Stopwatch.StartNew();
+
                 var options = new AnalyzerOptions(additionalFiles);
 
                 async Task<(Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
                 {
                     var compilation = await project.GetCompilationAsync(Token);
+                    
                     var analyzed = compilation.WithAnalyzers(analyzers, options);
                     var diagnostics = await analyzed.GetAnalyzerDiagnosticsAsync(analyzers, Token);
                     var nextDiagnostic = diagnostics.FirstOrDefault(d => fixableIds.Contains(d.Id));
@@ -166,6 +205,9 @@ namespace AutoCodeFix
 
                     foreach (var provider in providers)
                     {
+                        // TODO: add support for using the provider.GetFixAllProvider() if one is returned, 
+                        // which should boost performance when the FixAllProvider is tunned for performance.
+
                         await provider.RegisterCodeFixesAsync(
                             new CodeFixContext(document, diagnostic,
                             (action, diag) => codeAction = action,
@@ -196,13 +238,14 @@ namespace AutoCodeFix
                             {
                                 Log.LogError(
                                     nameof(AutoCodeFix),
-                                    "ACF008",
+                                    nameof(Resources.ACF008),
                                     diagnostic.Location.GetLineSpan().Path,
                                     diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
                                     diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
                                     diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
                                     diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
-                                    $"No applicable changes were provided by the code action '{codeAction.Title}' for diagnostic {diagnostic.Id}: {diagnostic.GetMessage()}.");
+                                    Resources.ACF008,
+                                    codeAction.Title, diagnostic.Id, diagnostic.GetMessage());
                                 Cancel();
                             }
                         }
@@ -210,13 +253,14 @@ namespace AutoCodeFix
                         {
                             Log.LogError(
                                 nameof(AutoCodeFix),
-                                "ACF006",
+                                nameof(Resources.ACF006),
                                 diagnostic.Location.GetLineSpan().Path,
                                 diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
                                 diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
                                 diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
                                 diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
-                                $"Failed to apply code action '{codeAction.Title}' for diagnostic {diagnostic.Id}: {diagnostic.GetMessage()}: {e.Message}");
+                                Resources.ACF006,
+                                codeAction.Title, diagnostic.Id, diagnostic.GetMessage(), e);
                             Cancel();
                         }
                     }
@@ -225,14 +269,15 @@ namespace AutoCodeFix
                     {
                         Log.LogError(
                             nameof(AutoCodeFix),
-                            "ACF007",
+                            nameof(Resources.ACF007),
                             null,
                             diagnostic.Location.GetLineSpan().Path,
                             diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
                             diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
                             diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
                             diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
-                            $"No code fix action found for diagnostic {diagnostic.Id}: {diagnostic.GetMessage()}.");
+                            Resources.ACF007,
+                            diagnostic.Id, diagnostic.GetMessage());
                         Cancel();
                     }
 
@@ -261,9 +306,10 @@ namespace AutoCodeFix
             {
                 Log.LogWarning(
                     nameof(AutoCodeFix),
-                    "ACF003",
+                    nameof(Resources.ACF003),
                     null, null, 0, 0, 0, 0,
-                    $"Failed to get types from assembly {assembly.FullName}: {e.Message}");
+                    Resources.ACF003,
+                    assembly.FullName, e);
                 return Enumerable.Empty<Type>();
             }
         }
@@ -278,9 +324,10 @@ namespace AutoCodeFix
             {
                 Log.LogWarning(
                     nameof(AutoCodeFix),
-                    "ACF004",
+                    nameof(Resources.ACF004),
                     null, null, 0, 0, 0, 0,
-                    $"Failed to create analyzer {type.FullName}: {tie.InnerException.Message}");
+                    Resources.ACF004,
+                    type.FullName, tie.InnerException);
 
                 return null;
             }
