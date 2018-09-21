@@ -19,6 +19,7 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <AddAdditionalExplicitAssemblyReferences>false</AddAdditionalExplicitAssemblyReferences>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);*.binlog</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
