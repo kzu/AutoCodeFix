@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <EnableSourceLink>false</EnableSourceLink>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
 </Project>
