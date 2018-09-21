@@ -23,7 +23,7 @@
 
   <PropertyGroup Label="Package">
     <IncludeFrameworkReferencesInPackage>false</IncludeFrameworkReferencesInPackage>
-    <PackageOutputPath>..\out</PackageOutputPath>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\out</PackageOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
