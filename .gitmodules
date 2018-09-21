@@ -1,4 +1,4 @@
 [submodule "external/Gherkinator"]
 	path = external/Gherkinator
-	url = ../../kzu/Gherkinator.git
+	url = https://github.com/kzu/Gherkinator.git
     branch = master
