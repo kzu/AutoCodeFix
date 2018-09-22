@@ -1,5 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
+
   <!-- See https://github.com/xamarin/xamarin-android/commit/18b8a5270969feb063f1e2926ca9a58099aabfa9 -->
   <PropertyGroup>
     <BuildDependsOn>
@@ -15,13 +17,27 @@
   <Target Name="_EnsureDesignTimeBuildForBuild">
     <PropertyGroup>
       <DesignTimeBuild Condition="'$(DesignTimeBuild)' == ''">false</DesignTimeBuild>
-    </PropertyGroup>    
+    </PropertyGroup>
+    <!-- Sets the 'AutoCodeFix' environment variable to 'true' so that analyzers and
+       code fixers can detect that AutoCodeFix is actively recording warnings for fixup purposes. 
+       Typically, an analyzer would use this environment variable to turn on/off diagnostics, or 
+       make them hidden instead of warnings for actual builds and not design-time builds, since 
+       users might not have an option to avoid applying the code fixes (i.e. they are for automatic 
+       code generation instead of actual code warnings that users should fix). -->
+    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
   </Target>
 
   <Target Name="_EnsureDesignTimeBuildForCompile">
     <PropertyGroup>
       <DesignTimeBuild Condition="'$(DesignTimeBuild)' == ''">true</DesignTimeBuild>
-    </PropertyGroup>    
+    </PropertyGroup>
+    <!-- Sets the 'AutoCodeFix' environment variable to 'true' so that analyzers and
+       code fixers can detect that AutoCodeFix is actively recording warnings for fixup purposes. 
+       Typically, an analyzer would use this environment variable to turn on/off diagnostics, or 
+       make them hidden instead of warnings for actual builds and not design-time builds, since 
+       users might not have an option to avoid applying the code fixes (i.e. they are for automatic 
+       code generation instead of actual code warnings that users should fix). -->
+    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
   </Target>
 
 </Project>

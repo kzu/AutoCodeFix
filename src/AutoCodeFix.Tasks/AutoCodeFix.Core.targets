@@ -4,7 +4,6 @@
   <UsingTask TaskName="RecordAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="CollectAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
 
   <PropertyGroup>
     <!-- This file contains a key=value per line, serialized from @(AutoFixSetting) items -->

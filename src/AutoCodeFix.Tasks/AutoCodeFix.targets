@@ -44,16 +44,6 @@
   <Import Project="AutoCodeFix.DesignTime.targets"/>
   <Import Project="AutoCodeFix.Core.targets" Condition="'$(DisableAutoCodeFix)' != 'true'" />
 
-  <!-- This target sets the 'AutoCodeFix' environment variable to 'true' so that analyzers and
-       code fixers can detect that AutoCodeFix is actively recording warnings for fixup purposes. 
-       Typically, an analyzer would use this environment variable to turn on/off diagnostics, or 
-       make them hidden instead of warnings for actual builds and not design-time builds, since 
-       users might not have an option to avoid applying the code fixes (i.e. they are for automatic 
-       code generation instead of actual code warnings that users should fix). -->
-  <Target Name="_SetAutoCodeFixEnvironment" BeforeTargets="CoreCompile">
-    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
-  </Target>
-
   <!-- Persists settings for the code fixers to know the intermediate output path or other values from the project.
        Unlike the other "private" targets that start with "_", this target is intended for public consumption in 
        BeforeTargets, so that dynamically calculated @(AutoFixSetting) can be added before the save happens. 
