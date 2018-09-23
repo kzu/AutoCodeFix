@@ -31,6 +31,12 @@ steps:
     codeCoverageEnabled: 'true'
     publishRunAttachments: 'true'
 
+- task: MSBuild@1
+  displayName: Sleet
+  inputs:
+    solution: src/AutoCodeFix.Package/AutoCodeFix.Package.nuproj
+    msbuildArguments: /t:Push /p:PackageOutputPath=$(Build.ArtifactStagingDirectory) 
+
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
   inputs:
