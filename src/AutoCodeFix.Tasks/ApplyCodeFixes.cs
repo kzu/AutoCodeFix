@@ -92,6 +92,18 @@ namespace AutoCodeFix
                 var watch = Stopwatch.StartNew();
                 var workspace = this.GetWorkspace();
                 var project = await workspace.GetOrAddProjectAsync(ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+
+                // Locate our settings ini file
+                var settings = AdditionalFiles.Select(x => x.GetMetadata("FullPath")).FirstOrDefault(x => x.EndsWith("AutoCodeFix.ini"));
+                if (settings != null && !project.AdditionalDocuments.Any(d => d.FilePath != null && d.FilePath.Equals(settings)))
+                {
+                    workspace.TryApplyChanges(project
+                        .AddAdditionalDocument(Path.GetFileName(settings), File.ReadAllText(settings), filePath: settings)
+                        .Project.Solution);
+                    
+                    project = workspace.CurrentSolution.GetProject(project.Id);
+                }
+
                 watch.Stop();
 
                 LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
@@ -128,7 +140,7 @@ namespace AutoCodeFix
                     .GroupBy(x => x.Id)
                     //.Select(x => new { Id = x.Key, Provider = x.Select(p => p.Provider).First() })
                     .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
-                
+
                 watch.Stop();
                 LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
 
@@ -153,33 +165,8 @@ namespace AutoCodeFix
                 }
 
                 fixableIds = new HashSet<string>(fixableIds.Where(id => allProviders.ContainsKey(id)));
-                var additionalFiles = ImmutableArray.Create(AdditionalFiles == null ? Array.Empty<AdditionalText>() :
-                    AdditionalFiles.Select(x => AdditionalTextFile.Create(x.GetMetadata("FullPath"))).ToArray());
 
-                // Process diagnostic options and rule set
-                var diagnosticOptions = new Dictionary<string, ReportDiagnostic>();
-                var reportDiagnostic = ReportDiagnostic.Default;
-                if (!string.IsNullOrEmpty(CodeAnalysisRuleSet))
-                {
-                    reportDiagnostic = RuleSet.GetDiagnosticOptionsFromRulesetFile(CodeAnalysisRuleSet, out diagnosticOptions);
-                }
-
-                // Explicitly supress the diagnostics in NoWarn
-                foreach (var noWarn in NoWarn)
-                {
-                    diagnosticOptions[noWarn.ItemSpec] = ReportDiagnostic.Suppress;
-                }
-                // Explicitly report as errors the specificied WarningsAsErrors
-                foreach (var warnAsError in WarningsAsErrors)
-                {
-                    diagnosticOptions[warnAsError.ItemSpec] = ReportDiagnostic.Error;
-                }
-
-                // Merge with existing compilation options
-                var immutableOptions = diagnosticOptions.ToImmutableDictionary().SetItems(project.CompilationOptions.SpecificDiagnosticOptions);
-                var compilationOptions = project.CompilationOptions.WithSpecificDiagnosticOptions(immutableOptions);
-                // Apply to solution and update project reference.
-
+                var compilationOptions = CreateCompilationOptions(project);
                 if (!workspace.TryApplyChanges(project.Solution.WithProjectCompilationOptions(project.Id, compilationOptions)))
                 {
                     throw new NotSupportedException();
@@ -189,12 +176,18 @@ namespace AutoCodeFix
 
                 watch = Stopwatch.StartNew();
 
+                var additionalFiles = ImmutableArray.Create(AdditionalFiles == null ? Array.Empty<AdditionalText>() :
+                    AdditionalFiles
+                        .Select(x => x.GetMetadata("FullPath"))
+                        .Distinct()
+                        .Select(x => AdditionalTextFile.Create(x)).ToArray());
+
                 var options = new AnalyzerOptions(additionalFiles);
 
                 async Task<(Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
                 {
                     var compilation = await project.GetCompilationAsync(Token);
-                    
+
                     var analyzed = compilation.WithAnalyzers(analyzers, options);
                     var diagnostics = await analyzed.GetAnalyzerDiagnosticsAsync(analyzers, Token);
                     var nextDiagnostic = diagnostics.FirstOrDefault(d => fixableIds.Contains(d.Id));
@@ -310,6 +303,34 @@ namespace AutoCodeFix
             {
                 Complete();
             }
+        }
+
+        private CompilationOptions CreateCompilationOptions(Project project)
+        {
+            // Process diagnostic options and rule set
+            var diagnosticOptions = new Dictionary<string, ReportDiagnostic>();
+            var reportDiagnostic = ReportDiagnostic.Default;
+            if (!string.IsNullOrEmpty(CodeAnalysisRuleSet))
+            {
+                reportDiagnostic = RuleSet.GetDiagnosticOptionsFromRulesetFile(CodeAnalysisRuleSet, out diagnosticOptions);
+            }
+
+            // Explicitly supress the diagnostics in NoWarn
+            foreach (var noWarn in NoWarn)
+            {
+                diagnosticOptions[noWarn.ItemSpec] = ReportDiagnostic.Suppress;
+            }
+            // Explicitly report as errors the specificied WarningsAsErrors
+            foreach (var warnAsError in WarningsAsErrors)
+            {
+                diagnosticOptions[warnAsError.ItemSpec] = ReportDiagnostic.Error;
+            }
+
+            // Merge with existing compilation options
+            var immutableOptions = diagnosticOptions.ToImmutableDictionary().SetItems(project.CompilationOptions.SpecificDiagnosticOptions);
+            var compilationOptions = project.CompilationOptions.WithSpecificDiagnosticOptions(immutableOptions);
+
+            return compilationOptions;
         }
 
         IEnumerable<Type> GetTypes(Assembly assembly)

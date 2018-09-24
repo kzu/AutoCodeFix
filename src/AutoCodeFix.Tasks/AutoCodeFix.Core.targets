@@ -44,9 +44,10 @@
        that fixable diagnostics were produced by creating the $(_ApplyCodeFixesFlag) file -->
   <Target Name="_ApplyCodeFixBeforeCompile" 
           BeforeTargets="CoreCompile" 
-          Condition="'$(AutoCodeFixBeforeCompile)' == 'true' or
-                     ('$(DesignTimeBuild)' != 'true' and Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
+          Condition="'$(DesignTimeBuild)' != 'true' and 
+                    ('$(AutoCodeFixBeforeCompile)' == 'true' or Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
 
+    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
     <ResolveLocalAssemblies Condition="'@(AutoFix)' != ''" />
 
     <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
@@ -64,7 +65,7 @@
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
-                    AdditionalFiles="@(AdditionalFiles)"
+                    AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
                     AutoFixIds="@(AutoFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
@@ -128,6 +129,7 @@
          and the entire target won't run. />
     -->
 
+    <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
     <ResolveLocalAssemblies />
 
     <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
@@ -145,7 +147,7 @@
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
-                    AdditionalFiles="@(AdditionalFiles)"
+                    AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
                     AutoFixIds="@(AutoFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"

@@ -53,7 +53,7 @@
        them to the $(AdditionalAutoFixSettingsInputs) property.
   -->
   <Target Name="SaveAutoFixSettings"
-          BeforeTargets="_ApplyCodeFixBeforeCompile;_ApplyCodeFixAfterCompile;Compile;CompileDesignTime"
+          BeforeTargets="PrepareForBuild;_ApplyCodeFixBeforeCompile;_ApplyCodeFixAfterCompile;Compile;CompileDesignTime"
           Inputs="$(MSBuildAllProjects);$(AdditionalAutoFixSettingsInputs)" 
           Outputs="$(_AutoCodeFixIni)">
 
