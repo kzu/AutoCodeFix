@@ -46,7 +46,7 @@
           BeforeTargets="CoreCompile" 
           Condition="'$(AutoCodeFixBeforeCompile)' == 'true' or
                      ('$(DesignTimeBuild)' != 'true' and Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
-    
+
     <ResolveLocalAssemblies Condition="'@(AutoFix)' != ''" />
 
     <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
@@ -78,6 +78,8 @@
       <!-- Flag to the Record/Collect targets to skip running. -->
       <_AutoCodeFixesApplied>true</_AutoCodeFixesApplied>
     </PropertyGroup>
+
+    <CallTarget Targets="AfterAutoCodeFix" />
 
   </Target>
 
@@ -157,6 +159,9 @@
              Targets="Compile"
              Properties="AutoFixWarningsAsErrors=true;DisableAutoCodeFix=true;BuildProjectReferences=false"
              />
+
+    <CallTarget Targets="AfterAutoCodeFix" />
+
   </Target>
 
 </Project>
