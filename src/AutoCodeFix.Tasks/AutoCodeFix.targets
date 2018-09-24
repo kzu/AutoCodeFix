@@ -38,6 +38,9 @@
 
     <!-- Path to the ProjectReader executable and its dependencies. -->
     <AutoCodeFixToolsPath Condition="'$(AutoCodeFixToolsPath)' == ''">$(MSBuildThisFileDirectory)..\tools</AutoCodeFixToolsPath>
+
+    <!-- This file contains a key=value per line, serialized from @(AutoFixSetting) items -->
+    <_AutoCodeFixIni>$(IntermediateOutputPath)AutoCodeFix.ini</_AutoCodeFixIni>
   </PropertyGroup>
 
   <!-- These targets ensure the $(DesignTimeBuild) property is always set and can be relied on -->
@@ -63,6 +66,8 @@
       <AutoFixSetting Include="IntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(IntermediateOutputPath)))" />
       <AutoFixSetting Include="AutoFix" Value="@(AutoFix)" />
     </ItemGroup>
+
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
 
     <WriteLinesToFile File="$(_AutoCodeFixIni)" Overwrite="true" 
                       Lines="@(AutoFixSetting -> '%(Identity)=%(Value)', '$(_NewLineSeparator)')" />

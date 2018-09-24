@@ -6,8 +6,6 @@
   <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
 
   <PropertyGroup>
-    <!-- This file contains a key=value per line, serialized from @(AutoFixSetting) items -->
-    <_AutoCodeFixIni>$(IntermediateOutputPath)AutoCodeFix.ini</_AutoCodeFixIni>
     <!-- When writing the .ini file, take into consideration the different line endings depending on the OS -->
     <_NewLineSeparator Condition="'$(OS)' == 'Windows_NT'">%0d</_NewLineSeparator>
     <_NewLineSeparator>$(_NewLineSeparator)%0a</_NewLineSeparator>
