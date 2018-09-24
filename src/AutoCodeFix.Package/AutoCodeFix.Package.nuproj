@@ -21,9 +21,6 @@
     <ProjectReference Include="..\AutoCodeFix.Tasks\AutoCodeFix.Tasks.csproj" />
     <ProjectReference Include="..\AutoCodeFix.ProjectReader\AutoCodeFix.ProjectReader.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Sleet.Azure" Version="0.2.5" Pack="false" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
   <Import Project="$(NuGetAuthoringPath)\NuGet.Packaging.Authoring.targets" Condition="Exists('$(NuGetAuthoringPath)\NuGet.Packaging.Authoring.targets')" />
   <Target Name="AfterPack" AfterTargets="Pack">
@@ -38,10 +35,5 @@
 
     <MakeDir Directories="$(TEMP)\packages" Condition="!Exists('$(TEMP)\packages')" />
     <Copy SourceFiles="$(PackageTargetPath)" DestinationFolder="$(TEMP)\packages" />
-  </Target>
-  <Target Name="BeforePush" BeforeTargets="Push" DependsOnTargets="GetPackageTargetPath">
-    <ItemGroup>
-      <Package Include="@(PackageTargetPath -> '%(FullPath)')" />
-    </ItemGroup>
   </Target>
 </Project>
