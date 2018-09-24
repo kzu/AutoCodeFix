@@ -51,9 +51,14 @@ namespace AutoCodeFix
             
             reader = configuration.GetProjectReader();
 
+            var properties = new Dictionary<string, string>(configuration.GlobalProperties);
+
+            // We *never* want do any auto fixing in the project reader.
+            properties["DisableAutoCodeFix"] = bool.TrueString;
+
             // Initialize the reader's workspace with the global properties.
             initializer = Task.Run(async () => 
-                await reader.CreateWorkspaceAsync(this.configuration.GlobalProperties));
+                await reader.CreateWorkspaceAsync(properties));
         }
 
         protected override void Dispose(bool finalize)
@@ -71,6 +76,7 @@ namespace AutoCodeFix
                 case ApplyChangesKind.AddProject:
                 case ApplyChangesKind.AddProjectReference:
                 case ApplyChangesKind.AddDocument:
+                case ApplyChangesKind.AddAdditionalDocument:
                 case ApplyChangesKind.ChangeDocument:
                 case ApplyChangesKind.ChangeCompilationOptions:
                 case ApplyChangesKind.RemoveDocument:
