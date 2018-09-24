@@ -232,10 +232,13 @@ namespace AutoCodeFix
                             if (applyChanges != null)
                             {
                                 applyChanges.Apply(workspace, Token);
+
                                 // According to https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/935 and 
                                 // https://github.com/dotnet/roslyn-sdk/issues/140, Sam Harwell mentioned that we should 
-                                // be forcing a re-parse of the document syntax tree at this point. If this comes up 
-                                // in the future, implement their approach. For now, I couldn't reproduce any issues.
+                                // be forcing a re-parse of the document syntax tree at this point. 
+                                var newDoc = await workspace.CurrentSolution.GetDocument(document.Id).RecreateDocumentAsync(Token);
+                                workspace.TryApplyChanges(newDoc.Project.Solution);
+
                                 fixApplied = true;
 
                                 watch.Stop();
