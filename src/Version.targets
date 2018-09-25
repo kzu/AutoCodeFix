@@ -11,18 +11,18 @@
     <GetPackageVersionDependsOn>SetVersions;$(GetPackageVersionDependsOn)</GetPackageVersionDependsOn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' != ''">$(SYSTEM_PULLREQUEST_TARGETBRANCH)</GitBranch>
+    <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' == '' and '$(BUILD_SOURCEBRANCHNAME)' != ''">$(BUILD_SOURCEBRANCHNAME)</GitBranch>
+    <GitBranch Condition="'$(APPVEYOR_REPO_BRANCH)' != ''">$(APPVEYOR_REPO_BRANCH)</GitBranch>
+  </PropertyGroup>
+
   <Target Name="SetVersions"
           BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetPackageVersion;Pack"
           DependsOnTargets="GitVersion"
           Returns="$(Version)"
           Condition="'$(GitInfoImported)' == 'true' And '$(ExcludeRestorePackageImports)' != 'true'">
     
-    <PropertyGroup>
-      <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' != ''">$(SYSTEM_PULLREQUEST_TARGETBRANCH)</GitBranch>
-      <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' == '' and '$(BUILD_SOURCEBRANCHNAME)' != ''">$(BUILD_SOURCEBRANCHNAME)</GitBranch>
-      <GitBranch Condition="'$(APPVEYOR_REPO_BRANCH)' != ''">$(APPVEYOR_REPO_BRANCH)</GitBranch>
-    </PropertyGroup>
-
     <ItemGroup>
       <VersionMetadata Include="$(GitCommits)" Condition="'$(GitSemVerDashLabel)' == ''" />
 
