@@ -39,7 +39,7 @@
       <VersionMetadataLabel>@(VersionMetadata -> '%(Identity)', '-')</VersionMetadataLabel>
       <VersionMetadataPlusLabel Condition="'$(VersionMetadataLabel)' != ''">+$(VersionMetadataLabel)</VersionMetadataPlusLabel>
 
-      <GitSemVerDashLabel Condition="'$(GitSemVerDashLabel)' != ''">$(GitSemVerDashLabel)$(GitCommits.PadLeft(3, '0'))</GitSemVerDashLabel>
+      <GitSemVerDashLabel Condition="'$(GitSemVerDashLabel)' != ''">$(GitSemVerDashLabel).$(GitCommits)</GitSemVerDashLabel>
       <PackageVersion>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)$(GitSemVerDashLabel)$(VersionMetadataPlusLabel)</PackageVersion>
       <Version>$(PackageVersion)</Version>
     </PropertyGroup>
