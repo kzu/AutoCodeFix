@@ -32,7 +32,7 @@
       <VersionMetadata Include="sha.$(GitCommit)"/>
 
       <VersionMetadata Condition="$(CI)" 
-                       Include="vsts.$(BUILD_BUILDID)"/>
+                       Include="build.$(BUILD_BUILDID)"/>
     </ItemGroup>
 
     <PropertyGroup>
