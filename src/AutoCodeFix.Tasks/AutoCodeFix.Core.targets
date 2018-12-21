@@ -25,7 +25,7 @@
     <!-- All of the roslyn dependencies that we know to work for the current version of AutoCodeFix 
          are included in the tools folder. Using the VS version of Roslyn workspace APIs is risky 
          since they may (and have!) introduce breaking changes that cause the workspace to fail to 
-         load, or CodeFixProvider to fail to load (i.e. StyleCop.Analyzers don't load under 15.9).
+         load, or CodeFixProvider to fail to load (i.e. StyleCop.Analyzers doesn't load under 15.9).
     -->
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildThisFileDirectory)..\tools" />
   </ItemGroup>

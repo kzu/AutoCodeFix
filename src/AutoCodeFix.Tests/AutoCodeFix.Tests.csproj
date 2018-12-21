@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Microsoft.Build.CentralPackageVersions" />
 
   <PropertyGroup>
     <TargetFramework>net471</TargetFramework>
@@ -8,23 +9,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NETStandard.Library" Version="2.0.0" />
-    <PackageReference Include="InjectModuleInitializer" Version="2.0.0" />
-    <PackageReference Include="MSBuilder.GenerateAssemblyInfo" Version="0.2.1" />
-    <PackageReference Include="MSBuilder.ThisAssembly.Metadata" Version="0.1.3" />
+    <PackageReference Include="NETStandard.Library" VersionOverride="2.0.0" />
+    <PackageReference Include="InjectModuleInitializer" VersionOverride="2.0.0" />
+    <PackageReference Include="MSBuilder.GenerateAssemblyInfo" />
+    <PackageReference Include="MSBuilder.ThisAssembly.Metadata" />
 
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Features" Version="$(RoslynVersion)" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
     <!--<PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta*" />-->
 
-    <PackageReference Include="xunit" Version="$(XunitVersion)" />
+    <PackageReference Include="xunit" />
     <!-- xunit.runner.visualstudio is needed for VSTest built-in task in VSTS -->
-    <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitVersion)" />
+    <PackageReference Include="xunit.runner.visualstudio" />
     <!-- xunit.runner.desktop is needed for Live Unit Testing support -->
-    <PackageReference Include="xunit.runner.console" Version="$(XunitVersion)" />
+    <PackageReference Include="xunit.runner.console" />
     <!-- xunit.runner.console is used to implement /t:Test -->
-    <PackageReference Include="xunit.runner.msbuild" Version="$(XunitVersion)" />
+    <PackageReference Include="xunit.runner.msbuild" />
   </ItemGroup>
 
   <ItemGroup>

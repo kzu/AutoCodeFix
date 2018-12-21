@@ -27,10 +27,4 @@
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\out</PackageOutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Label="NuGet">
-    <MicrosoftBuildVersion Condition="'$(MicrosoftBuildVersion)' == ''">15.7.179</MicrosoftBuildVersion>
-    <RoslynVersion Condition="'$(RoslynVersion)' == ''">2.9.0</RoslynVersion>
-    <XunitVersion Condition="'$(XunitVersion)' == ''">2.4.0</XunitVersion>
-  </PropertyGroup>
-
 </Project>
