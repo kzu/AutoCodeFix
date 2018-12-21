@@ -1,11 +1,11 @@
 <Project>
 
-  <ItemGroup Label="CommonPackages">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-*" PrivateAssets="all" Condition="$(CI)" />
-    <PackageReference Include="GitInfo" Version="2.0.17" PrivateAssets="all" />
-    <PackageReference Include="MSBuilder.GenerateAssemblyInfo" Version="0.2.1" PrivateAssets="all" />
-    <PackageReference Include="MSBuilder.ThisAssembly.Metadata" Version="0.1.3" PrivateAssets="all" />
-    <PackageReference Include="NuGet.Build.Packaging" Version="0.2.5-dev.5" PrivateAssets="all" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Condition="$(CI)" />
+    <PackageReference Include="GitInfo" PrivateAssets="all" />
+    <PackageReference Include="MSBuilder.GenerateAssemblyInfo" PrivateAssets="all" />
+    <PackageReference Include="MSBuilder.ThisAssembly.Metadata" PrivateAssets="all" />
+    <PackageReference Include="NuGet.Build.Packaging" PrivateAssets="all" />
   </ItemGroup>
 
   <Import Project="Version.targets"/>
