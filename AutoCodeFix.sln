@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		azure-pipelines.yml = azure-pipelines.yml
 		src\Directory.Build.props = src\Directory.Build.props
 		src\Directory.Build.targets = src\Directory.Build.targets
+		src\global.json = src\global.json
 		NuGet.Config = NuGet.Config
 		src\Packages.props = src\Packages.props
 		README.md = README.md
@@ -20,11 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCodeFix.Tests", "src\AutoCodeFix.Tests\AutoCodeFix.Tests.csproj", "{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}"
-	ProjectSection(ProjectDependencies) = postProject
-		{91F9A526-E62C-491B-8774-88A61BDF1E1A} = {91F9A526-E62C-491B-8774-88A61BDF1E1A}
-	EndProjectSection
-EndProject
-Project("{5DD5E4FA-CB73-4610-85AB-557B54E96AA9}") = "AutoCodeFix.Package", "src\AutoCodeFix.Package\AutoCodeFix.Package.nuproj", "{91F9A526-E62C-491B-8774-88A61BDF1E1A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gherkinator", "Gherkinator", "{45AD3328-A714-4CE9-B47D-7097D7676283}"
 	ProjectSection(SolutionItems) = preProject
@@ -35,6 +31,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gherkinator", "external\Gherkinator\src\Gherkinator\Gherkinator.csproj", "{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gherkinator.MSBuild", "external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.csproj", "{7B1FCAD4-5BB6-4455-894A-840023BDC421}"
+EndProject
+Project("{13B669BE-BB05-4DDF-9536-439F39A36129}") = "AutoCodeFix.Package", "src\AutoCodeFix.Package\AutoCodeFix.Package.msbuildproj", "{13956D6F-A714-4E60-9D17-656ADC02C851}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,10 +52,6 @@ Global
 		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B3F4E2F-3B9D-46B3-A3E8-46194CC61B73}.Release|Any CPU.Build.0 = Release|Any CPU
-		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{91F9A526-E62C-491B-8774-88A61BDF1E1A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4E88EF7-9B83-40C0-B085-90D18FF3A7D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -66,6 +60,10 @@ Global
 		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B1FCAD4-5BB6-4455-894A-840023BDC421}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13956D6F-A714-4E60-9D17-656ADC02C851}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13956D6F-A714-4E60-9D17-656ADC02C851}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13956D6F-A714-4E60-9D17-656ADC02C851}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13956D6F-A714-4E60-9D17-656ADC02C851}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

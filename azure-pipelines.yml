@@ -1,27 +1,14 @@
-queue: Hosted VS2017
-
 steps:
 
 - checkout: self
   clean: true
 
-- task: MSBuild@1
-  displayName: Restore
-  inputs:
-    solution: AutoCodeFix.sln
-    msbuildArguments: /t:Restore /p:Configuration=Release /m
-
-- task: MSBuild@1
-  displayName: Version
-  inputs:
-    solution: src/AutoCodeFix.Package/AutoCodeFix.Package.nuproj
-    msbuildArguments: /t:SetVersions
-
-- task: MSBuild@1
+- task: VSBuild@1
   displayName: Build
   inputs:
     solution: AutoCodeFix.sln
-    msbuildArguments: /bl:"$(Build.ArtifactStagingDirectory)\build.binlog" /p:PackageOutputPath=$(Build.ArtifactStagingDirectory) /p:Configuration=Release
+    configuration: Release
+    msbuildArgs: '/restore /bl:"$(Build.ArtifactStagingDirectory)\build.binlog" /p:PackageOutputPath=$(Build.ArtifactStagingDirectory)'
 
 - task: VSTest@2
   displayName: Test

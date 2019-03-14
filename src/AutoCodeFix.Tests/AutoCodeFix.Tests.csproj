@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Sdk Name="Microsoft.Build.CentralPackageVersions" />
+  <Sdk Name="Microsoft.Build.CentralPackageVersions" Version="2.0.1" />
 
   <PropertyGroup>
     <TargetFramework>net471</TargetFramework>
@@ -31,7 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.csproj" IncludeAssets="all" />
     <ProjectReference Include="..\..\external\Gherkinator\src\Gherkinator\Gherkinator.csproj" />
-    <ProjectReference Include="..\AutoCodeFix.Package\AutoCodeFix.Package.nuproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\AutoCodeFix.Package\AutoCodeFix.Package.msbuildproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <Target Name="CopyAutoCodeFixLayout" AfterTargets="Build">
-    <MSBuild Projects="..\AutoCodeFix.Package\AutoCodeFix.Package.nuproj" Targets="GetPackageContents" Properties="Configuration=$(Configuration);BuildProjectReferences=false">
+    <MSBuild Projects="..\AutoCodeFix.Package\AutoCodeFix.Package.msbuildproj" Targets="GetPackageContents" Properties="Configuration=$(Configuration);BuildProjectReferences=false">
       <Output TaskParameter="TargetOutputs" ItemName="AutoCodeFixContent" />
     </MSBuild>
     <Copy SourceFiles="@(AutoCodeFixContent)" DestinationFiles="@(AutoCodeFixContent -> '$(OutputPath)AutoCodeFix\%(PackagePath)')" Condition="'%(AutoCodeFixContent.Kind)' != 'Metadata' and '%(AutoCodeFixContent.Kind)' != 'Dependency'" SkipUnchangedFiles="true" />
