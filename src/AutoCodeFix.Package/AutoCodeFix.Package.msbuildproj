@@ -15,6 +15,7 @@
 
   <PropertyGroup>
     <PackOnBuild Condition="'$(PackOnBuild)' == '' and '$(Configuration)' == 'Release'">true</PackOnBuild>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -27,8 +28,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AutoCodeFix.Tasks\AutoCodeFix.Tasks.csproj" Project="{135CD01C-AC26-4FA4-99AD-B490AFA8B062}" Name="AutoCodeFix.Tasks" />
-    <ProjectReference Include="..\AutoCodeFix.ProjectReader\AutoCodeFix.ProjectReader.csproj" Project="{B83184E2-5D3E-48BA-AC9E-0A1EF131A108}" Name="AutoCodeFix.ProjectReader" />
+    <ProjectReference Include="..\AutoCodeFix.Tasks\AutoCodeFix.Tasks.csproj" />
+    <ProjectReference Include="..\AutoCodeFix.ProjectReader\AutoCodeFix.ProjectReader.csproj" />
   </ItemGroup>
 
   <ItemGroup>
