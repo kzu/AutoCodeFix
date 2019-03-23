@@ -77,8 +77,8 @@ namespace AutoCodeFix.Tests
                 var metadataFile = context.Options.AdditionalFiles.FirstOrDefault(x => x.Path.EndsWith("AutoCodeFix.ini", StringComparison.OrdinalIgnoreCase));
                 if (metadataFile != null)
                 {
-                    // We can pass ourselves arbitrary settings by adding <AutoFixSetting Include="" Value="" /> items.
-                    // If items are calculated, you can create a target and run BeforeTargets="SaveAutoFixSettings".
+                    // We can pass ourselves arbitrary settings by adding <AutoCodeFixSetting Include="" Value="" /> items.
+                    // If items are calculated, you can create a target and run BeforeTargets="SaveAutoCodeFixSettings".
                     var settings = File.ReadAllLines(metadataFile.Path)
                             .Where(line => !string.IsNullOrEmpty(line))
                             .Select(line => line.Split('='))

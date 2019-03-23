@@ -1,8 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="RecordAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="CollectAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="RecordAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="CollectAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
 
   <PropertyGroup>
@@ -30,12 +30,12 @@
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildThisFileDirectory)..\tools" />
   </ItemGroup>
 
-  <Target Name="_ValidateAutoFixNoWarn" BeforeTargets="Compile" Condition="'$(NoWarn)' != ''">
+  <Target Name="_ValidateAutoCodeFixNoWarn" BeforeTargets="Compile" Condition="'$(NoWarn)' != ''">
     <ItemGroup>
-      <NoWarnAutoFix Include="@(AutoFix)" Condition="$(NoWarn.Contains('%(Identity)'))" />
+      <NoWarnAutoCodeFix Include="@(AutoCodeFix)" Condition="$(NoWarn.Contains('%(Identity)'))" />
     </ItemGroup>
-    <Warning Code="ACF009" Text="Auto fix %(NoWarnAutoFix.Identity} is included in the NoWarn property and therefore cannot not be fixed."
-             Condition="'@(NoWarnAutoFix)' != ''"/>
+    <Warning Code="ACF009" Text="Auto code fix %(NoWarnAutoCodeFix.Identity} is included in the NoWarn property and therefore cannot not be fixed."
+             Condition="'@(NoWarnAutoCodeFix)' != ''"/>
   </Target>
 
   <!-- This target will run if AutoCodeFixBeforeCompile==true or when the IDE-run code fixers signal 
@@ -46,7 +46,7 @@
                     ('$(AutoCodeFixBeforeCompile)' == 'true' or Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
 
     <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
-    <ResolveLocalAssemblies Condition="'@(AutoFix)' != ''" />
+    <ResolveLocalAssemblies Condition="'@(AutoCodeFix)' != ''" />
 
     <ResolveCodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)' != '' and ('$(Language)' == 'C#' or '$(Language)' == 'VB')"
                                 CodeAnalysisRuleSet="$(CodeAnalysisRuleSet)"
@@ -64,14 +64,14 @@
                     DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
-                    AutoFixIds="@(AutoFix)"
+                    AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
-                    Condition="'@(AutoFix)' != ''" />
+                    Condition="'@(AutoCodeFix)' != ''" />
 
-    <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoFix)' != ''" />
+    <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoCodeFix)' != ''" />
 
     <PropertyGroup>
       <!-- Flag to the Record/Collect targets to skip running. -->
@@ -84,46 +84,46 @@
 
   <!-- In order to detect fixable diagnostics, we set up a logger that records diagnostics emitted by 
        the CoreCompile (csc/vbc) run. This target sets up the logger and keeps track of invocations. -->
-  <Target Name="_RecordAutoFixWarnings" BeforeTargets="CoreCompile" Condition="'$(_AutoCodeFixesApplied)' != 'true'">
-    <RecordAutoFixWarnings AutoFixIds="@(AutoFix)" ProjectFile="$(MSBuildProjectFullPath)" Condition="'@(AutoFix)' != ''" />
+  <Target Name="_RecordAutoCodeFixWarnings" BeforeTargets="CoreCompile" Condition="'$(_AutoCodeFixesApplied)' != 'true'">
+    <RecordAutoCodeFixWarnings AutoCodeFixIds="@(AutoCodeFix)" ProjectFile="$(MSBuildProjectFullPath)" Condition="'@(AutoCodeFix)' != ''" />
   </Target>
 
   <!-- This target runs after CoreCompile and picks up the recorded warnings, and cleans up the logger hookup. 
-       Note that we can condition the target on '@(AutoFix)' != '' unlike the record target, since by the time 
+       Note that we can condition the target on '@(AutoCodeFix)' != '' unlike the record target, since by the time 
        this target runs, the _DisableAutoCodeFix has already finished, potentially clearing out the item group
        if DisableAutoCodeFix==true.
   -->
-  <Target Name="_CollectAutoFixWarnings" Returns="@(AutoFixWarning)" AfterTargets="CoreCompile" Condition="'@(AutoFix)' != '' and '$(_AutoCodeFixesApplied)' != 'true'">
-    <CollectAutoFixWarnings ProjectFile="$(MSBuildProjectFullPath)">
-      <Output TaskParameter="AutoFixWarnings" ItemName="AutoFixWarning" />
-    </CollectAutoFixWarnings>
+  <Target Name="_CollectAutoCodeFixWarnings" Returns="@(AutoCodeFixWarning)" AfterTargets="CoreCompile" Condition="'@(AutoCodeFix)' != '' and '$(_AutoCodeFixesApplied)' != 'true'">
+    <CollectAutoCodeFixWarnings ProjectFile="$(MSBuildProjectFullPath)">
+      <Output TaskParameter="AutoCodeFixWarnings" ItemName="AutoCodeFixWarning" />
+    </CollectAutoCodeFixWarnings>
   </Target>
 
   <!-- Ties together the Collect and Apply targets. -->
-  <Target Name="_ApplyCodeFixes" AfterTargets="CoreCompile" Condition="'$(_AutoCodeFixesApplied)' != 'true'" DependsOnTargets="_CollectAutoFixWarnings;_ApplyCodeFixAfterCompile" />
+  <Target Name="_ApplyCodeFixes" AfterTargets="CoreCompile" Condition="'$(_AutoCodeFixesApplied)' != 'true'" DependsOnTargets="_CollectAutoCodeFixWarnings;_ApplyCodeFixAfterCompile" />
   
   <!-- This target is similar to _ApplyCodeFixBeforeCompile, but since it's run after CoreCompile (see above), 
-       if any @(AutoFixWarning) was collected, it needs to run CoreCompile again on the same project, but this 
+       if any @(AutoCodeFixWarning) was collected, it needs to run CoreCompile again on the same project, but this 
        time making sure it doesn't run again (to avoid infinite recursion).         
   -->
-  <Target Name="_ApplyCodeFixAfterCompile" Condition="'@(AutoFixWarning)' != ''">
+  <Target Name="_ApplyCodeFixAfterCompile" Condition="'@(AutoCodeFixWarning)' != ''">
 
     <ItemGroup>
       <!-- To aid in diagnosing what's been collected, log the distinct warning messages -->
-      <AutoFixWarningMessage Include="@(AutoFixWarning -> '%(Identity): %(Message)')" />
-      <DistinctAutoFixMessage Include="@(AutoFixWarningMessage -> Distinct())" />
+      <AutoCodeFixWarningMessage Include="@(AutoCodeFixWarning -> '%(Identity): %(Message)')" />
+      <DistinctAutoCodeFixMessage Include="@(AutoCodeFixWarningMessage -> Distinct())" />
     </ItemGroup>
 
     <Message Importance="low" Text="Applying automatic code fixes for diagnostis:
-@(DistinctAutoFixMessage -> '%(Identity)', '$(_NewLineSeparator)')" />
+@(DistinctAutoCodeFixMessage -> '%(Identity)', '$(_NewLineSeparator)')" />
 
     <!-- If there were warnings, we need to run the code fixers, and invoke compile 
          again, this time the warnings should be errors, since it means a fixable 
          diagnostics didn't get fixed. 
          
          Note that, unlike the _ApplyCodeFixBeforeCompile target, we don't need to 
-         condition these tasks with @(AutoFix)!='' since the _CollectAutoFixWarnings target 
-         is already conditioned that way, meaning in that case there would be no @(AutoFixWarning) 
+         condition these tasks with @(AutoCodeFix)!='' since the _CollectAutoCodeFixWarnings target 
+         is already conditioned that way, meaning in that case there would be no @(AutoCodeFixWarning) 
          and the entire target won't run. />
     -->
 
@@ -146,18 +146,18 @@
                     DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
-                    AutoFixIds="@(AutoFix)"
+                    AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)" />
 
     <!-- Make sure we build as little as possible here, specifying not to build project 
-         references again, skipping this target, and considering @(AutoFix) warnings as 
-         errors (see_SetAutoFixWarningsAsErrors) -->
+         references again, skipping this target, and considering @(AutoCodeFix) warnings as 
+         errors (see_SetAutoCodeFixWarningsAsErrors) -->
     <MSBuild Projects="$(MSBuildProjectFullPath)"
              Targets="Compile"
-             Properties="AutoFixWarningsAsErrors=true;DisableAutoCodeFix=true;BuildProjectReferences=false"
+             Properties="AutoCodeFixWarningsAsErrors=true;DisableAutoCodeFix=true;BuildProjectReferences=false"
              />
 
     <CallTarget Targets="AfterAutoCodeFix" />

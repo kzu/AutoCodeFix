@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="NETStandard.Library" VersionOverride="2.0.0" />
-    <PackageReference Include="InjectModuleInitializer" VersionOverride="2.0.0" />
     <PackageReference Include="MSBuilder.GenerateAssemblyInfo" />
     <PackageReference Include="MSBuilder.ThisAssembly.Metadata" />
 
@@ -36,10 +35,6 @@
 
   <ItemGroup>
     <Content Include="**/*.feature" Exclude="$(OutputPath)/**" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\external\Gherkinator\src\Gherkinator.MSBuild\ModuleInitializer.cs" Link="ModuleInitializer.cs" />
   </ItemGroup>
 
   <Target Name="CopyAutoCodeFixLayout" AfterTargets="Build">

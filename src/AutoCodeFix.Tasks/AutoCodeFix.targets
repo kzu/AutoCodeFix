@@ -1,8 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="RecordAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="CollectAutoFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="RecordAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="CollectAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
 
@@ -39,7 +39,7 @@
     <!-- Path to the ProjectReader executable and its dependencies. -->
     <AutoCodeFixToolsPath Condition="'$(AutoCodeFixToolsPath)' == ''">$(MSBuildThisFileDirectory)..\tools</AutoCodeFixToolsPath>
 
-    <!-- This file contains a key=value per line, serialized from @(AutoFixSetting) items -->
+    <!-- This file contains a key=value per line, serialized from @(AutoCodeFixSetting) items -->
     <_AutoCodeFixIni>$(IntermediateOutputPath)AutoCodeFix.ini</_AutoCodeFixIni>
   </PropertyGroup>
 
@@ -49,28 +49,28 @@
 
   <!-- Persists settings for the code fixers to know the intermediate output path or other values from the project.
        Unlike the other "private" targets that start with "_", this target is intended for public consumption in 
-       BeforeTargets, so that dynamically calculated @(AutoFixSetting) can be added before the save happens. 
+       BeforeTargets, so that dynamically calculated @(AutoCodeFixSetting) can be added before the save happens. 
        
        Note, however, that the incremental build will only consider $(MSBuildAllProjects) by default. If the custom 
        settings are calculated from other files that need to be added to the incremental runs of this target, append 
-       them to the $(AdditionalAutoFixSettingsInputs) property.
+       them to the $(AdditionalAutoCodeFixSettingsInputs) property.
   -->
-  <Target Name="SaveAutoFixSettings"
+  <Target Name="SaveAutoCodeFixSettings"
           BeforeTargets="_ApplyCodeFixBeforeCompile;_ApplyCodeFixAfterCompile;Compile;CompileDesignTime"
-          Inputs="$(MSBuildAllProjects);$(AdditionalAutoFixSettingsInputs)" 
+          Inputs="$(MSBuildAllProjects);$(AdditionalAutoCodeFixSettingsInputs)" 
           Outputs="$(_AutoCodeFixIni)">
 
     <ItemGroup>
       <!-- These values are always persisted, since they are generally useful. -->
-      <AutoFixSetting Include="BaseIntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(BaseIntermediateOutputPath)))" />
-      <AutoFixSetting Include="IntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(IntermediateOutputPath)))" />
-      <AutoFixSetting Include="AutoFix" Value="@(AutoFix)" />
+      <AutoCodeFixSetting Include="BaseIntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(BaseIntermediateOutputPath)))" />
+      <AutoCodeFixSetting Include="IntermediateOutputPath" Value="$([MSBuild]::NormalizeDirectory($(IntermediateOutputPath)))" />
+      <AutoCodeFixSetting Include="AutoCodeFix" Value="@(AutoCodeFix)" />
     </ItemGroup>
 
     <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
 
     <WriteLinesToFile File="$(_AutoCodeFixIni)" Overwrite="true" 
-                      Lines="@(AutoFixSetting -> '%(Identity)=%(Value)', '$(_NewLineSeparator)')" />
+                      Lines="@(AutoCodeFixSetting -> '%(Identity)=%(Value)', '$(_NewLineSeparator)')" />
     <ItemGroup>
       <FileWrites Include="$(_AutoCodeFixIni)" />
       <!-- By adding the file to @(AdditionalFiles), we get it passed automatically to code fixes in the IDE 
@@ -82,9 +82,9 @@
   <!-- When we explicitly invoke MSBuild from _ApplyCodeFixAfterCompile after applying the code fixes, we want 
        to force the compilers to consider the auto-fixable diagnostics as errors, since their presence will indicate 
        that the diagnostic could not be auto-fixed. TODO: maybe provide a better error message in that case somehow? -->
-  <Target Name="_SetAutoFixWarningsAsErrors" BeforeTargets="CoreCompile" Condition="'$(AutoFixWarningsAsErrors)' == 'true'">
+  <Target Name="_SetAutoCodeFixWarningsAsErrors" BeforeTargets="CoreCompile" Condition="'$(AutoCodeFixWarningsAsErrors)' == 'true'">
     <PropertyGroup>
-      <WarningsAsErrors>$(WarningsAsErrors);@(AutoFix)</WarningsAsErrors>
+      <WarningsAsErrors>$(WarningsAsErrors);@(AutoCodeFix)</WarningsAsErrors>
     </PropertyGroup>
   </Target>
 

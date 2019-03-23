@@ -11,9 +11,9 @@ package:
 ```xml
 <ItemGroup>
         <!-- System usings should go first --> 
-        <AutoFix Include="SA1208" />
+        <AutoCodeFix Include="SA1208" />
         <!-- Blank line required before single-line comment -->
-        <AutoFix Include="SA1515" />
+        <AutoCodeFix Include="SA1515" />
 </ItemGroup>
 ```
 
@@ -37,11 +37,11 @@ the built-in editor in VS, which for the example above, would result in a rule s
 </RuleSet>
 ```
 
-With that configuration in place, you can add the `AutoFix` just like before:
+With that configuration in place, you can add the `AutoCodeFix` just like before:
 
 ```xml
 <ItemGroup>
-        <AutoFix Include="RCS1003" />
+        <AutoCodeFix Include="RCS1003" />
 </ItemGroup>
 ```
 

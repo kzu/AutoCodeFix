@@ -5,10 +5,10 @@ using Microsoft.Build.Utilities;
 
 namespace AutoCodeFix
 {
-    public class RecordAutoFixWarnings : Task
+    public class RecordAutoCodeFixWarnings : Task
     {
         [Required]
-        public string[] AutoFixIds { get; set; } = new string[0];
+        public string[] AutoCodeFixIds { get; set; } = new string[0];
 
         [Required]
         public string ProjectFile { get; set; }
@@ -21,7 +21,7 @@ namespace AutoCodeFix
             {
                 try
                 {
-                    var recorder = new WarningsRecorder(ProjectFile, AutoFixIds);
+                    var recorder = new WarningsRecorder(ProjectFile, AutoCodeFixIds);
                     var flags = BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.NonPublic | BindingFlags.Public;
                     var context = BuildEngine.GetType().InvokeMember("LoggingContext", flags, null, BuildEngine, null);
                     var logging = context.GetType().InvokeMember("LoggingService", flags, null, context, null);

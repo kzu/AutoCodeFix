@@ -39,7 +39,7 @@ namespace AutoCodeFix
         public string ToolsPath { get; set; }
 
         [Required]
-        public ITaskItem[] AutoFixIds { get; set; }
+        public ITaskItem[] AutoCodeFixIds { get; set; }
 
         //[Required]
         public ITaskItem[] Analyzers { get; set; }
@@ -75,7 +75,7 @@ namespace AutoCodeFix
             if (DebugAutoCodeFix)
                 Debugger.Launch();
 
-            if (AutoFixIds?.Length == 0)
+            if (AutoCodeFixIds?.Length == 0)
                 return true;
 
             using (var resolver = new AssemblyResolver(AssemblySearchPath, (i, m) => Log.LogMessage(i, m)))
@@ -108,7 +108,7 @@ namespace AutoCodeFix
 
                 LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
 
-                var fixableIds = new HashSet<string>(AutoFixIds.Select(x => x.ItemSpec));
+                var fixableIds = new HashSet<string>(AutoCodeFixIds.Select(x => x.ItemSpec));
 
                 watch = Stopwatch.StartNew();
 

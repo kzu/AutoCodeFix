@@ -1,4 +1,4 @@
-﻿Feature: AutoFix
+﻿Feature: AutoCodeFix
   Applies code fixes during build
 
   Background: A common import of the package targets directly
@@ -32,7 +32,7 @@
         <Analyzer Include="$(CurrentDirectory)AutoCodeFix.Tests.dll" />
     </ItemGroup>
     <ItemGroup>
-        <AutoFix Include="TEST001" />
+        <AutoCodeFix Include="TEST001" />
     </ItemGroup>
 </Project>
 """
@@ -66,9 +66,9 @@ public class Class1
     </ItemGroup>
     <ItemGroup>
         <!-- System usings should go first --> 
-        <AutoFix Include="SA1208" />
+        <AutoCodeFix Include="SA1208" />
         <!-- Blank line required before single-line comment -->
-        <AutoFix Include="SA1515" />
+        <AutoCodeFix Include="SA1515" />
     </ItemGroup>
 </Project>
 """
@@ -119,7 +119,7 @@ public static class Program
         <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
-        <AutoFix Include="RECS0085" />
+        <AutoCodeFix Include="RECS0085" />
     </ItemGroup>
 </Project>
 """
@@ -173,7 +173,7 @@ public static class Program
         <PackageReference Include="Roslynator.CodeFixes" Version="1.9.0" />
     </ItemGroup>
     <ItemGroup>
-        <AutoFix Include="RCS1003" />
+        <AutoCodeFix Include="RCS1003" />
     </ItemGroup>
 </Project>
 """

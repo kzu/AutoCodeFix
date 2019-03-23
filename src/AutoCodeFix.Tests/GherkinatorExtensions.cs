@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Gherkinator;
 using Gherkinator.Sdk;
 using Microsoft.Build.Execution;
@@ -27,7 +28,12 @@ namespace AutoCodeFix
                     ("CurrentDirectory", Directory.GetCurrentDirectory() + "\\"),
                     ("DebugAutoCodeFix", Debugger.IsAttached.ToString()),
                     ("AutoCodeFixPath", Directory.GetCurrentDirectory() + "\\AutoCodeFix\\"),
-                    ("AutoCodeFixVersion", ThisAssembly.Metadata.PackageVersion),
+                    ("AutoCodeFixVersion", Assembly
+                        .GetExecutingAssembly()
+                        .GetCustomAttributes<AssemblyMetadataAttribute>()
+                        .Where(x => x.Key == "PackageVersion")
+                        .Select(x => x.Value)
+                        .First()),
                     ("RestoreIgnoreFailedSources", "true"),
                     //("RestoreSources", Environment.ExpandEnvironmentVariables(
                     //    @"%TEMP%\packages;%USERPROFILE%\.nuget\packages;C:\Program Files\dotnet\sdk\NuGetFallbackFolder;https://api.nuget.org/v3/index.json"))

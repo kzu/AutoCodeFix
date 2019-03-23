@@ -5,20 +5,20 @@ using Microsoft.Build.Utilities;
 
 namespace AutoCodeFix
 {
-    public class CollectAutoFixWarnings : Task
+    public class CollectAutoCodeFixWarnings : Task
     {
         [Required]
         public string ProjectFile { get; set; }
 
         [Output]
-        public ITaskItem[] AutoFixWarnings { get; set; } = new ITaskItem[0];
+        public ITaskItem[] AutoCodeFixWarnings { get; set; } = new ITaskItem[0];
 
         public override bool Execute()
         {
             var key = ProjectFile + "|" + typeof(WarningsRecorder).FullName;
             if (BuildEngine4.GetRegisteredTaskObject(key, RegisteredTaskObjectLifetime.Build) is WarningsRecorder recorder)
             {
-                AutoFixWarnings = recorder.Warnings
+                AutoCodeFixWarnings = recorder.Warnings
                     .Select(w => new TaskItem(w.Code, new Dictionary<string, string>
                     {
                         { nameof(BuildWarningEventArgs.File), w.File },
