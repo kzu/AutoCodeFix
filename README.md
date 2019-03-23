@@ -22,8 +22,7 @@ IDE, added to the project via the `<Analyzer Include="..." />` item group. Analy
 distributed via nuget packages already add those automatically to your project (such as the StyleCop.Analyzers, 
 RefactoringEssentials, Roslynator.Analyzers and Roslynator.CodeFixes, etc).
 
-It's important to note that by default, the compiler *has* to emit the diagnostics you intend to auto 
-fix. For diagnostics that are of `Info` severity by default (i.e. [RCS1003: Add braces to if-else](https://github.com/JosefPihrt/Roslynator/blob/master/docs/analyzers/RCS1003.md)) 
+It's important to note that by default, the compiler *has* to emit the diagnostics you want fixed automatically. For diagnostics that are of `Info` severity by default (i.e. [RCS1003: Add braces to if-else](https://github.com/JosefPihrt/Roslynator/blob/master/docs/analyzers/RCS1003.md)) 
 you can bump its severity to `Warning` so that `AutoCodeFix` can process them automatically on the next build. 
 
 You [configure analyzers](https://docs.microsoft.com/en-us/visualstudio/code-quality/use-roslyn-analyzers?view=vs-2017) using 
