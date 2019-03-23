@@ -1,60 +1,51 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.Build.NoTargets/1.0.40">
   <Sdk Name="Microsoft.Build.CentralPackageVersions" Version="2.0.1" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackageId>AutoCodeFix</PackageId>
     <Description>Applies code fixes automatically during build.</Description>
     <Title>AutoCodeFix</Title>
+    <PackageIconUrl>https://raw.github.com/kzu/AutoCodeFix/master/icon/64.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/kzu/AutoCodeFix</PackageProjectUrl>
+    <!--<PackageLicenseExpression>MIT</PackageLicenseExpression>-->
+    <PackageLicenseUrl>https://raw.githubusercontent.com/kzu/AutoCodeFix/master/LICENSE</PackageLicenseUrl>
     <PackageTags>roslyn codegen codefix analyzer</PackageTags>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackOnBuild Condition="'$(PackOnBuild)' == '' and '$(Configuration)' == 'Release'">true</PackOnBuild>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
     <TargetFramework>netstandard2.0</TargetFramework>
-
     <NuGetBuildTasksPackTargets>NO-SDK-PACK</NuGetBuildTasksPackTargets>
     <IsPackagingProject>true</IsPackagingProject>
     <IncludeFrameworkReferencesInPackage>false</IncludeFrameworkReferencesInPackage>
     <IncludeOutputsInPackage>false</IncludeOutputsInPackage>
     <IncludeProjectReferencesInPackage>true</IncludeProjectReferencesInPackage>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\AutoCodeFix.Tasks\AutoCodeFix.Tasks.csproj" />
     <ProjectReference Include="..\AutoCodeFix.ProjectReader\AutoCodeFix.ProjectReader.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- Remove references from Directory.Build.targets -->
     <PackageReference Remove="Microsoft.SourceLink.GitHub" />
     <PackageReference Remove="MSBuilder.GenerateAssemblyInfo" />
     <PackageReference Remove="MSBuilder.ThisAssembly.Metadata" />
   </ItemGroup>
-
   <Target Name="AfterPack" AfterTargets="Pack">
-    <Exec Command='rd "$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())" /q /s' Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" />
-
+    <Exec Command="rd &quot;$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())&quot; /q /s" Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" />
     <ItemGroup>
       <_ToDelete Include="$(TEMP)\packages\$(PackageId)*.nupkg" />
-      <ToDelete Include="@(_ToDelete)"
-                Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '$(PackageId)\.\d+\.\d+\.\d+\.*'))" />
+      <ToDelete Include="@(_ToDelete)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '$(PackageId)\.\d+\.\d+\.\d+\.*'))" />
     </ItemGroup>
     <Delete Files="@(ToDelete)" />
-
     <MakeDir Directories="$(TEMP)\packages" Condition="!Exists('$(TEMP)\packages')" />
     <Copy SourceFiles="$(PackageTargetPath)" DestinationFolder="$(TEMP)\packages" />
   </Target>
-
   <Target Name="CompileDesignTime" />
-
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\Managed\Microsoft.Managed.DesignTime.targets" Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\Managed\Microsoft.Managed.DesignTime.targets')" />
-
 </Project>

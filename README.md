@@ -1,4 +1,5 @@
-# AutoCodeFix
+![Icon](https://raw.github.com/kzu/AutoCodeFix/master/icon/32.png) AutoCodeFix
+============
 
 Applies Roslyn code fixes automatically during build for the chosen "auto codefix" diagnostics, fixing 
 the code for you automatically, instead of having to manually apply code fixes in the IDE.
@@ -47,3 +48,7 @@ With that configuration in place, you can add the `AutoFix` just like before:
 When no fixable diagnostics are emitted by the compiler, the impact of `AutoCodeFix` on build times 
 is virtually none.
 
+
+> Icon [Gear](https://thenounproject.com/term/gear/2069169/) by 
+> [Putra Theoo](https://thenounproject.com/tnputra555), 
+> from [The Noun Project](https://thenounproject.com/)
