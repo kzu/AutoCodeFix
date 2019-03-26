@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -93,6 +94,8 @@ namespace AutoCodeFix
             try
             {
                 LogMessage("Applying code fixes...", MessageImportance.Normal.ForVerbosity(verbosity));
+                var overallTime = Stopwatch.StartNew();
+                var appliedFixes = new ConcurrentDictionary<string, int>();
 
                 var watch = Stopwatch.StartNew();
                 LogMessage("Getting Workspace...", MessageImportance.Low.ForVerbosity(verbosity));
@@ -138,8 +141,6 @@ namespace AutoCodeFix
                 Token.ThrowIfCancellationRequested();
 
                 watch = Stopwatch.StartNew();
-
-                //var composition = 
 
                 // We filter all available codefix providers to only those that support the project language and can 
                 // fix any of the generator diagnostic codes we received. 
@@ -193,6 +194,9 @@ namespace AutoCodeFix
                         .Distinct()
                         .Select(x => AdditionalTextFile.Create(x)).ToArray());
 
+                // TODO: upcoming editorconfig-powered options available to Analyzers would 
+                // not work if we invoke them like this. See how the editor options can be 
+                // retrieved and passed properly here.
                 var options = new AnalyzerOptions(additionalFiles);
 
                 async Task<(Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
@@ -221,6 +225,8 @@ namespace AutoCodeFix
                     {
                         // TODO: add support for using the provider.GetFixAllProvider() if one is returned, 
                         // which should boost performance when the FixAllProvider is tunned for performance.
+                        // See https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/StyleCop.Analyzers/StyleCopTester/Program.cs#L314 
+                        // for inspiration and in-depth knowledge of how it should be applied/supported.
 
                         await provider.RegisterCodeFixesAsync(
                             new CodeFixContext(document, diagnostic,
@@ -304,11 +310,19 @@ namespace AutoCodeFix
                             diagnostic.Id, diagnostic.GetMessage());
                         Cancel();
                     }
+                    else
+                    {
+                        appliedFixes[diagnostic.Id] = appliedFixes.GetOrAdd(diagnostic.Id, 0) + 1;
+                    }
 
                     watch = Stopwatch.StartNew();
 
                     (diagnostic, providers) = await GetNextFixableDiagnostic();
                 }
+
+                overallTime.Stop();
+                LogMessage($"Fixed {appliedFixes.Values.Sum()} diagnostics in {overallTime.ElapsedMilliseconds} milliseconds.", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Fixed: \r\n{string.Join(Environment.NewLine, appliedFixes.Select(x => $"\t{x.Key}: {x.Value}"))}", MessageImportance.Low.ForVerbosity(verbosity));
             }
             catch (Exception e)
             {
