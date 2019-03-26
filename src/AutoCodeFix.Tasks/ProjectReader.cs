@@ -58,9 +58,8 @@ namespace AutoCodeFix
         public void Dispose()
         {
             if (process != null && !process.HasExited)
-                Task.Run(async () => await rpc.InvokeAsync("Exit"));
+                process.Kill();
 
-            process.WaitForExit();
             process = null;
         }
 
