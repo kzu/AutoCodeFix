@@ -23,6 +23,8 @@ namespace AutoCodeFix
     {
         static readonly Version MinRoslynVersion = new Version(1, 2);
 
+        LoggerVerbosity? verbosity = null;
+
         [Required]
         public string ProjectFullPath { get; set; }
 
@@ -65,6 +67,11 @@ namespace AutoCodeFix
         /// </summary>
         public bool DebugProjectReader { get; set; }
 
+        /// <summary>
+        /// Logging verbosity for reporting.
+        /// </summary>
+        public string Verbosity { get; set; }
+
         [Output]
         public ITaskItem[] GeneratedFiles { get; set; }
 
@@ -78,6 +85,16 @@ namespace AutoCodeFix
             if (AutoCodeFixIds?.Length == 0)
                 return true;
 
+            if (Verbosity != null && Verbosity.Length > 0)
+            {
+                if (!Enum.TryParse<LoggerVerbosity>(Verbosity, out var value))
+                {
+                    Log.LogError($"Invalid {nameof(Verbosity)} value '{Verbosity}'. Expected values: {string.Join(", ", Enum.GetNames(typeof(LoggerVerbosity)))}");
+                    return false;
+                }
+                verbosity = value;
+            }
+
             using (var resolver = new AssemblyResolver(AssemblySearchPath, (i, m) => Log.LogMessage(i, m)))
             {
                 Task.Run(ExecuteAsync).ConfigureAwait(false);
@@ -85,13 +102,34 @@ namespace AutoCodeFix
             }
         }
 
+        void IBuildConfiguration.LogMessage(string message, MessageImportance importance)
+            => LogMessage(message, Importance(importance));
+
+        MessageImportance Importance(MessageImportance importance)
+        {
+            if (verbosity == null)
+                return importance;
+
+            if (verbosity == LoggerVerbosity.Quiet)
+                return MessageImportance.Low;
+
+            if (verbosity >= LoggerVerbosity.Detailed)
+                return MessageImportance.High;
+
+            return importance;
+        }
+
         private async Task ExecuteAsync()
         {
             try
             {
+                LogMessage("Applying code fixes...", Importance(MessageImportance.Normal));
+
                 var watch = Stopwatch.StartNew();
+                LogMessage("Getting Workspace...", Importance(MessageImportance.Low));
                 var workspace = this.GetWorkspace();
-                var project = await workspace.GetOrAddProjectAsync(ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                LogMessage("Getting Project...", Importance(MessageImportance.Low));
+                var project = await workspace.GetOrAddProjectAsync(this.GetProjectReader(), ProjectFullPath, (i, m) => LogMessage(m, i), Token);
 
                 // Locate our settings ini file
                 var settings = AdditionalFiles.Select(x => x.GetMetadata("FullPath")).FirstOrDefault(x => x.EndsWith("AutoCodeFix.ini"));
@@ -106,15 +144,15 @@ namespace AutoCodeFix
 
                 watch.Stop();
 
-                LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
+                LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
 
                 var fixableIds = new HashSet<string>(AutoCodeFixIds.Select(x => x.ItemSpec));
 
                 watch = Stopwatch.StartNew();
 
-                // We don't warn again, since loading the BuildWorkspace will already have done that.
-                var analyzers = this.LoadAnalyzers(warn: false)
-                    .Concat(MefHostServices.DefaultAssemblies)
+                var analyzerAssemblies = this.LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToArray();
+
+                var analyzers = analyzerAssemblies
                     .SelectMany(GetTypes)
                     .Where(t => !t.IsAbstract && typeof(DiagnosticAnalyzer).IsAssignableFrom(t))
                     .Where(t => t.GetConstructor(Type.EmptyTypes) != null)
@@ -124,15 +162,17 @@ namespace AutoCodeFix
                     .ToImmutableArray();
 
                 watch.Stop();
-                LogMessage($"Loaded applicable analyzers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
+                LogMessage($"Loaded applicable analyzers in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
 
                 Token.ThrowIfCancellationRequested();
 
                 watch = Stopwatch.StartNew();
 
+                //var composition = 
+
                 // We filter all available codefix providers to only those that support the project language and can 
                 // fix any of the generator diagnostic codes we received. 
-                var allProviders = project.Solution.Workspace.Services.HostServices
+                var allProviders = MefHostServices.Create(analyzerAssemblies)
                     .GetExports<CodeFixProvider, IDictionary<string, object>>()
                     .Where(x => ((string[])x.Metadata["Languages"]).Contains(project.Language))
                     .SelectMany(x => x.Value.FixableDiagnosticIds.Select(id => new { Id = id, Provider = x.Value }))
@@ -142,7 +182,7 @@ namespace AutoCodeFix
                     .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
 
                 watch.Stop();
-                LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low);
+                LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -169,7 +209,7 @@ namespace AutoCodeFix
                 var compilationOptions = CreateCompilationOptions(project);
                 if (!workspace.TryApplyChanges(project.Solution.WithProjectCompilationOptions(project.Id, compilationOptions)))
                 {
-                    throw new NotSupportedException();
+                    throw new NotSupportedException("Workspace does not support supplying project compilation options.");
                 }
 
                 project = workspace.CurrentSolution.GetProject(project.Id);
@@ -200,6 +240,7 @@ namespace AutoCodeFix
 
                 while (diagnostic != null && providers?.Length != 0)
                 {
+                    LogMessage($"Applying code fix for {diagnostic}", Importance(MessageImportance.Normal));
                     var document = project.GetDocument(diagnostic.Location.SourceTree);
                     CodeAction codeAction = null;
 
@@ -222,6 +263,7 @@ namespace AutoCodeFix
                         {
                             var operations = await codeAction.GetOperationsAsync(Token);
                             var applyChanges = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
+
                             if (applyChanges != null)
                             {
                                 applyChanges.Apply(workspace, Token);
@@ -235,9 +277,9 @@ namespace AutoCodeFix
                                 fixApplied = true;
 
                                 watch.Stop();
-                                LogMessage($"Fixed {diagnostic.Id} in {watch.Elapsed.Milliseconds} milliseconds", MessageImportance.Low);
+                                LogMessage($"Fixed {diagnostic.Id} in {watch.Elapsed.Milliseconds} milliseconds", Importance(MessageImportance.Low));
 
-                                project = await workspace.GetOrAddProjectAsync(ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                                project = await workspace.GetOrAddProjectAsync(this.GetProjectReader(), ProjectFullPath, (i, m) => LogMessage(m, i), Token);
 
                                 // We successfully applied one code action for the given diagnostics, 
                                 // consider it fixed even if there are other providers.
@@ -298,6 +340,7 @@ namespace AutoCodeFix
             catch (Exception e)
             {
                 LogErrorFromException(e);
+                Cancel();
             }
             finally
             {
@@ -309,10 +352,9 @@ namespace AutoCodeFix
         {
             // Process diagnostic options and rule set
             var diagnosticOptions = new Dictionary<string, ReportDiagnostic>();
-            var reportDiagnostic = ReportDiagnostic.Default;
             if (!string.IsNullOrEmpty(CodeAnalysisRuleSet))
             {
-                reportDiagnostic = RuleSet.GetDiagnosticOptionsFromRulesetFile(CodeAnalysisRuleSet, out diagnosticOptions);
+                _ = RuleSet.GetDiagnosticOptionsFromRulesetFile(CodeAnalysisRuleSet, out diagnosticOptions);
             }
 
             // Explicitly supress the diagnostics in NoWarn

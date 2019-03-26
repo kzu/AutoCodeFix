@@ -20,6 +20,8 @@ namespace AutoCodeFix
 
         bool DebugProjectReader { get; }
 
+        void LogMessage(string message, MessageImportance importance);
+
         TaskLoggingHelper Log { get; }
     }
 }

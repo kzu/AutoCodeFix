@@ -12,32 +12,41 @@ namespace AutoCodeFix
     {
         public static ProjectReader GetProjectReader(IBuildConfiguration configuration)
         {
-            //var lifetime = configuration.BuildingInsideVisualStudio ?
-            //    RegisteredTaskObjectLifetime.AppDomain :
-            //    RegisteredTaskObjectLifetime.Build;
-            // TODO: When we get project sync, enable ^
-            var lifetime = RegisteredTaskObjectLifetime.Build;
+            var lifetime = configuration.BuildingInsideVisualStudio ?
+                RegisteredTaskObjectLifetime.AppDomain :
+                RegisteredTaskObjectLifetime.Build;
             var key = typeof(ProjectReader).FullName;
             if (!(configuration.BuildEngine4.GetRegisteredTaskObject(key, lifetime) is ProjectReader reader))
             {
-                reader = new ProjectReader(configuration.MSBuildBinPath, configuration.ToolsPath, configuration.DebugProjectReader);
+                configuration.LogMessage($"Initializing project reader...", MessageImportance.Low);
+                reader = new ProjectReader(configuration.MSBuildBinPath, configuration.ToolsPath, configuration.DebugProjectReader, configuration.GlobalProperties);
+                
                 configuration.BuildEngine4.RegisterTaskObject(key, reader, lifetime, false);
+            }
+
+            // Register a per-build cleaner so we can cleanup the in-memory solution information.
+            if (configuration.BuildEngine4.GetRegisteredTaskObject(key + ".Cleanup", RegisteredTaskObjectLifetime.Build) == null)
+            {
+                configuration.BuildEngine4.RegisterTaskObject(
+                    key + ".Cleanup",
+                    new DisposableAction(async () => await reader.CloseWorkspaceAsync()),
+                    RegisteredTaskObjectLifetime.Build,
+                    false);
             }
 
             return reader;
         }
 
         private readonly string msBuildBinPath;
-        private readonly string toolsPath;
         private readonly bool debugConsole;
         private readonly string readerExe;
         private Process process;
         private JsonRpc rpc;
+        private Task initializer;
 
-        public ProjectReader(string msBuildBinPath, string toolsPath, bool debugConsole)
+        public ProjectReader(string msBuildBinPath, string toolsPath, bool debugConsole, IDictionary<string, string> globalProperties)
         {
             this.msBuildBinPath = msBuildBinPath;
-            this.toolsPath = toolsPath;
             this.debugConsole = debugConsole;
 
             readerExe = new FileInfo(Path.Combine(toolsPath, "ProjectReader.exe")).FullName;
@@ -46,6 +55,7 @@ namespace AutoCodeFix
                 throw new FileNotFoundException($"Did not find project reader tool at '{readerExe}'.", readerExe);
 
             EnsureRunning();
+            initializer = Task.Run(async () => await CreateWorkspaceAsync(globalProperties));
         }
 
         private void EnsureRunning()
@@ -104,14 +114,11 @@ namespace AutoCodeFix
             return await rpc.InvokeAsync<bool>(nameof(Ping));
         }
 
-        public async Task CreateWorkspaceAsync(IDictionary<string, string> globalProperties)
+        public async Task<dynamic> OpenProjectAsync(string projectFullPath)
         {
             EnsureRunning();
-            // We never do codegen in the remote workspace
-            await rpc.InvokeAsync(nameof(CreateWorkspaceAsync), new Dictionary<string, string>(globalProperties)
-            {
-                ["NoCodeGen"] = "true"
-            });
+            await initializer;
+            return await rpc.InvokeAsync<dynamic>(nameof(OpenProjectAsync), projectFullPath);
         }
 
         public async Task CloseWorkspaceAsync()
@@ -120,10 +127,14 @@ namespace AutoCodeFix
             await rpc.InvokeAsync(nameof(CloseWorkspaceAsync));
         }
 
-        public async Task<dynamic> OpenProjectAsync(string projectFullPath)
+        private async Task CreateWorkspaceAsync(IDictionary<string, string> globalProperties)
         {
             EnsureRunning();
-            return await rpc.InvokeAsync<dynamic>(nameof(OpenProjectAsync), projectFullPath);
+            // We never do codegen in the remote workspace
+            await rpc.InvokeAsync(nameof(CreateWorkspaceAsync), new Dictionary<string, string>(globalProperties)
+            {
+                ["NoCodeGen"] = "true"
+            });
         }
     }
 }

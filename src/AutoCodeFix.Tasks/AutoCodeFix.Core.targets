@@ -24,7 +24,7 @@
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildBinPath)" />
     <!-- All of the roslyn dependencies that we know to work for the current version of AutoCodeFix 
          are included in the tools folder. Using the VS version of Roslyn workspace APIs is risky 
-         since they may (and have!) introduce breaking changes that cause the workspace to fail to 
+         since they may (and some already have!) introduce breaking changes that cause the workspace to fail to 
          load, or CodeFixProvider to fail to load (i.e. StyleCop.Analyzers doesn't load under 15.9).
     -->
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildThisFileDirectory)..\tools" />
@@ -69,6 +69,7 @@
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
+                    Verbosity="$(ApplyCodeFixVerbosity)"
                     Condition="'@(AutoCodeFix)' != ''" />
 
     <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoCodeFix)' != ''" />
@@ -150,15 +151,15 @@
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
-                    BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)" />
+                    BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
+                    Verbosity="$(ApplyCodeFixVerbosity)" />
 
     <!-- Make sure we build as little as possible here, specifying not to build project 
          references again, skipping this target, and considering @(AutoCodeFix) warnings as 
          errors (see_SetAutoCodeFixWarningsAsErrors) -->
     <MSBuild Projects="$(MSBuildProjectFullPath)"
              Targets="Compile"
-             Properties="AutoCodeFixWarningsAsErrors=true;DisableAutoCodeFix=true;BuildProjectReferences=false"
-             />
+             Properties="AutoCodeFixWarningsAsErrors=true;DisableAutoCodeFix=true;BuildProjectReferences=false" />
 
     <CallTarget Targets="AfterAutoCodeFix" />
 

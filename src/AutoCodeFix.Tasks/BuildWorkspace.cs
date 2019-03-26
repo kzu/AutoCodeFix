@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,48 +24,46 @@ namespace AutoCodeFix
         public static BuildWorkspace GetWorkspace(IBuildConfiguration configuration)
         {
             // TODO: could we keep the workspace alive while building inside VS?
-            // Loading everything during build takes a constant 21'' for out stunts 
+            // Loading everything during build takes a constant 21'' for our stunts 
             // solution, which is unacceptable for every build, unless it's a 
             // command line build.
-            var lifetime = RegisteredTaskObjectLifetime.Build;
+            var lifetime = configuration.BuildingInsideVisualStudio ?
+                RegisteredTaskObjectLifetime.AppDomain :
+                RegisteredTaskObjectLifetime.Build;
             var key = typeof(BuildWorkspace).FullName;
             if (!(configuration.BuildEngine4.GetRegisteredTaskObject(key, lifetime) is BuildWorkspace workspace))
             {
+                var watch = Stopwatch.StartNew();
                 workspace = new BuildWorkspace(configuration);
                 configuration.BuildEngine4.RegisterTaskObject(key, workspace, lifetime, false);
+                watch.Stop();
+                configuration.LogMessage($"Initialized workspace in {watch.Elapsed.Milliseconds} milliseconds", MessageImportance.Low);
             }
+
+            // Register a per-build cleaner so we can cleanup the in-memory solution information.
+            if (configuration.BuildEngine4.GetRegisteredTaskObject(key + ".Cleanup", RegisteredTaskObjectLifetime.Build) == null)
+            {
+                configuration.BuildEngine4.RegisterTaskObject(
+                    key + ".Cleanup", 
+                    new DisposableAction(() => workspace.ClearSolution()),
+                    RegisteredTaskObjectLifetime.Build, 
+                    false);
+            }
+
             return workspace;
         }
 
         readonly IBuildConfiguration configuration;
-        readonly ProjectReader reader;
-        readonly Task initializer;
 
         public BuildWorkspace(IBuildConfiguration configuration)
-            : base(MefHostServices.Create(MefHostServices
-                .DefaultAssemblies.Concat(configuration.LoadAnalyzers())), 
+            : base(MefHostServices.Create(MefHostServices.DefaultAssemblies), 
                 "BuildWorkspace")
         {
-            this.configuration = configuration;
-            
-            reader = configuration.GetProjectReader();
-
+            this.configuration = configuration;            
             var properties = new Dictionary<string, string>(configuration.GlobalProperties);
-
+            
             // We *never* want do any auto fixing in the project reader.
             properties["DisableAutoCodeFix"] = bool.TrueString;
-
-            // Initialize the reader's workspace with the global properties.
-            initializer = Task.Run(async () => 
-                await reader.CreateWorkspaceAsync(properties));
-        }
-
-        protected override void Dispose(bool finalize)
-        {
-            base.Dispose(finalize);
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            reader.CloseWorkspaceAsync();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
         public override bool CanApplyChange(ApplyChangesKind feature)
@@ -127,7 +124,7 @@ namespace AutoCodeFix
             }
         }
 
-        public async Task<Project> GetOrAddProjectAsync(string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
+        public async Task<Project> GetOrAddProjectAsync(ProjectReader reader, string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
         {
             projectFullPath = new FileInfo(projectFullPath).FullName;
             // Ensure full project paths always.
@@ -142,17 +139,15 @@ namespace AutoCodeFix
                 return project;
             }
 
-            project = await AddProjectAsync(projectFullPath, log, cancellation);
+            project = await AddProjectAsync(reader, projectFullPath, log, cancellation);
 
             TryApplyChanges(CurrentSolution);
 
             return project;
         }
 
-        private async Task<Project> AddProjectAsync(string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
+        private async Task<Project> AddProjectAsync(ProjectReader reader, string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
         {
-            await initializer;
-
             var watch = Stopwatch.StartNew();
 
             var metadata = await reader.OpenProjectAsync(projectFullPath);

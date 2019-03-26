@@ -39,6 +39,9 @@
     <!-- Path to the ProjectReader executable and its dependencies. -->
     <AutoCodeFixToolsPath Condition="'$(AutoCodeFixToolsPath)' == ''">$(MSBuildThisFileDirectory)..\tools</AutoCodeFixToolsPath>
 
+    <!-- Logging verbosity for tracing -->
+    <ApplyCodeFixVerbosity Condition="'$(ApplyCodeFixVerbosity)' == ''">Normal</ApplyCodeFixVerbosity>
+
     <!-- This file contains a key=value per line, serialized from @(AutoCodeFixSetting) items -->
     <_AutoCodeFixIni>$(IntermediateOutputPath)AutoCodeFix.ini</_AutoCodeFixIni>
   </PropertyGroup>

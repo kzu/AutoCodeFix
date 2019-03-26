@@ -11,9 +11,9 @@ namespace AutoCodeFix
         public static IEnumerable<Lazy<TExtension, TMetadata>> GetExports<TExtension, TMetadata>(this HostServices services)
         {
             var getExports = services.GetType().GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                .FirstOrDefault(m => m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 2)
+                .FirstOrDefault(m => m.Name.EndsWith("GetExports") && m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 2)
                 ?.MakeGenericMethod(typeof(TExtension), typeof(TMetadata))
-                ?? throw new NotSupportedException("Failed to retrieven exports from host services. Plase report the issue.");
+                ?? throw new NotSupportedException("Failed to retrieve exports from host services. Plase report the issue.");
 
             var exports = getExports.Invoke(services, null);
             
