@@ -15,7 +15,7 @@
     <PackageTags>roslyn codegen codefix analyzer</PackageTags>
   </PropertyGroup>
   <PropertyGroup>
-    <PackOnBuild Condition="'$(PackOnBuild)' == '' and '$(Configuration)' == 'Release'">true</PackOnBuild>
+    <PackOnBuild>true</PackOnBuild>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
