@@ -2,7 +2,7 @@
   <Sdk Name="Microsoft.Build.CentralPackageVersions" Version="2.0.1" />
 
   <PropertyGroup>
-    <TargetFramework>net471</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <DefaultItemExcludes>$(DefaultItemExcludes);**/*.feature</DefaultItemExcludes>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
@@ -21,10 +21,6 @@
     <PackageReference Include="xunit" />
     <!-- xunit.runner.visualstudio is needed for VSTest built-in task in VSTS -->
     <PackageReference Include="xunit.runner.visualstudio" />
-    <!-- xunit.runner.desktop is needed for Live Unit Testing support -->
-    <PackageReference Include="xunit.runner.console" />
-    <!-- xunit.runner.console is used to implement /t:Test -->
-    <PackageReference Include="xunit.runner.msbuild" />
   </ItemGroup>
 
   <ItemGroup>
