@@ -41,7 +41,7 @@
     <PackageReference Remove="MSBuilder.ThisAssembly.Metadata" />
   </ItemGroup>
 
-  <Target Name="DeployPackage" AfterTargets="AfterBuild;Pack">
+  <Target Name="DeployPackage" AfterTargets="AfterBuild;Pack" DependsOnTargets="Pack">
     <Message Text="Nuking $(LocalAppData)\NuGet\v3-cache)" Condition="Exists('$(LocalAppData)\NuGet\v3-cache)')" />
     <Exec Command='rd "$(LocalAppData)\NuGet\v3-cache)" /q /s' Condition="Exists('$(LocalAppData)\NuGet\v3-cache)')" />
     <Message Text="Nuking $(NuGetPackageRoot)$(PackageId.ToLowerInvariant())" Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" />
