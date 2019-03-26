@@ -4,13 +4,11 @@
   <PropertyGroup>
     <AssemblyName>ProjectReader</AssemblyName>
     <TargetFramework>net46</TargetFramework>
-    <RootNamespace>Stunts</RootNamespace>
+    <RootNamespace>AutoCodeFix</RootNamespace>
     <OutputType>Exe</OutputType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
-    <RoslynVersion>2.9.0</RoslynVersion>
     <PrimaryOutputKind>tools</PrimaryOutputKind>
-
     <IsPackable>false</IsPackable>
     <InferPackageContents>false</InferPackageContents>
     <CopyNuGetImplementations>true</CopyNuGetImplementations>
