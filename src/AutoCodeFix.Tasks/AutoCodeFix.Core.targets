@@ -1,5 +1,6 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets="_InitializeAutoCodeFix">
 
+  <UsingTask TaskName="InitializeBuildEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="RecordAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
   <UsingTask TaskName="CollectAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
@@ -30,6 +31,16 @@
     <AutoCodeFixAssemblySearchPath Include="$(MSBuildThisFileDirectory)..\tools" />
   </ItemGroup>
 
+  <Target Name="_InitializeAutoCodeFix" Condition="'@(AutoCodeFix)' != '' and '$(DesignTimeBuild)' != 'true'">
+    <ResolveLocalAssemblies />
+    <InitializeBuildEnvironment ToolsPath="$(AutoCodeFixToolsPath)" 
+                                AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
+                                MSBuildBinPath="$(MSBuildBinPath)"
+                                DebugProjectReader="$(DebugProjectReader)"
+                                BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
+                                Verbosity="$(AutoCodeFixVerbosity)" />
+  </Target>
+
   <Target Name="_ValidateAutoCodeFixNoWarn" BeforeTargets="Compile" Condition="'$(NoWarn)' != ''">
     <ItemGroup>
       <NoWarnAutoCodeFix Include="@(AutoCodeFix)" Condition="$(NoWarn.Contains('%(Identity)'))" />
@@ -57,11 +68,8 @@
     </ResolveCodeAnalysisRuleSet>
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
-                    ToolsPath="$(AutoCodeFixToolsPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
-                    MSBuildBinPath="$(MSBuildBinPath)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
-                    DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
                     AutoCodeFixIds="@(AutoCodeFix)"
@@ -69,7 +77,7 @@
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
-                    Verbosity="$(ApplyCodeFixVerbosity)"
+                    Verbosity="$(AutoCodeFixVerbosity)"
                     Condition="'@(AutoCodeFix)' != ''" />
 
     <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoCodeFix)' != ''" />
@@ -105,7 +113,7 @@
   
   <!-- This target is similar to _ApplyCodeFixBeforeCompile, but since it's run after CoreCompile (see above), 
        if any @(AutoCodeFixWarning) was collected, it needs to run CoreCompile again on the same project, but this 
-       time making sure it doesn't run again (to avoid infinite recursion).         
+       time making sure it doesn't run itself again (to avoid infinite recursion).         
   -->
   <Target Name="_ApplyCodeFixAfterCompile" Condition="'@(AutoCodeFixWarning)' != ''">
 
@@ -140,11 +148,8 @@
     </ResolveCodeAnalysisRuleSet>
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
-                    ToolsPath="$(AutoCodeFixToolsPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
-                    MSBuildBinPath="$(MSBuildBinPath)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
-                    DebugProjectReader="$(DebugProjectReader)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
                     AutoCodeFixIds="@(AutoCodeFix)"
@@ -152,7 +157,7 @@
                     WarningsAsErrors="$(WarningsAsErrors)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
-                    Verbosity="$(ApplyCodeFixVerbosity)" />
+                    Verbosity="$(AutoCodeFixVerbosity)" />
 
     <!-- Make sure we build as little as possible here, specifying not to build project 
          references again, skipping this target, and considering @(AutoCodeFix) warnings as 

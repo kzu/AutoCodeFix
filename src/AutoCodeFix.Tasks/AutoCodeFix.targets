@@ -40,7 +40,7 @@
     <AutoCodeFixToolsPath Condition="'$(AutoCodeFixToolsPath)' == ''">$(MSBuildThisFileDirectory)..\tools</AutoCodeFixToolsPath>
 
     <!-- Logging verbosity for tracing -->
-    <ApplyCodeFixVerbosity Condition="'$(ApplyCodeFixVerbosity)' == ''">Normal</ApplyCodeFixVerbosity>
+    <AutoCodeFixVerbosity Condition="'$(AutoCodeFixVerbosity)' == ''">Normal</AutoCodeFixVerbosity>
 
     <!-- This file contains a key=value per line, serialized from @(AutoCodeFixSetting) items -->
     <_AutoCodeFixIni>$(IntermediateOutputPath)AutoCodeFix.ini</_AutoCodeFixIni>
@@ -91,5 +91,6 @@
     </PropertyGroup>
   </Target>
 
+  <!-- Extensibility point for consumers that want to get notified after code fixes were applied. -->
   <Target Name="AfterAutoCodeFix" />
 </Project>

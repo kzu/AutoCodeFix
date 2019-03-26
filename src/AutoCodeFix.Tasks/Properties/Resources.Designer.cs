@@ -149,5 +149,23 @@ namespace AutoCodeFix.Properties {
                 return ResourceManager.GetString("ACF010", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expected an object of type {0} to be registered with the build engine..
+        /// </summary>
+        internal static string TaskObjectNotRegistered {
+            get {
+                return ResourceManager.GetString("TaskObjectNotRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expected an object of type {0} to be registered with the build engine, but found object of type {1}..
+        /// </summary>
+        internal static string TaskObjectWrongType {
+            get {
+                return ResourceManager.GetString("TaskObjectWrongType", resourceCulture);
+            }
+        }
     }
 }

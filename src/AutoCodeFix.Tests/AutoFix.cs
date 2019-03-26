@@ -25,7 +25,6 @@ namespace AutoCodeFix.Tests
                 .Then("build succeeds", c => c.AssertSuccess())
                 .Run();
 
-
         [Fact]
         public void can_apply_RefactoringEssentials_code_fix_automatically()
             => Scenario()

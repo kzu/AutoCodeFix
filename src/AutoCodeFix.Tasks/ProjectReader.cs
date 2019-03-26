@@ -10,33 +10,6 @@ namespace AutoCodeFix
 {
     internal class ProjectReader : IDisposable
     {
-        public static ProjectReader GetProjectReader(IBuildConfiguration configuration)
-        {
-            var lifetime = configuration.BuildingInsideVisualStudio ?
-                RegisteredTaskObjectLifetime.AppDomain :
-                RegisteredTaskObjectLifetime.Build;
-            var key = typeof(ProjectReader).FullName;
-            if (!(configuration.BuildEngine4.GetRegisteredTaskObject(key, lifetime) is ProjectReader reader))
-            {
-                configuration.LogMessage($"Initializing project reader...", MessageImportance.Low);
-                reader = new ProjectReader(configuration.MSBuildBinPath, configuration.ToolsPath, configuration.DebugProjectReader, configuration.GlobalProperties);
-                
-                configuration.BuildEngine4.RegisterTaskObject(key, reader, lifetime, false);
-            }
-
-            // Register a per-build cleaner so we can cleanup the in-memory solution information.
-            if (configuration.BuildEngine4.GetRegisteredTaskObject(key + ".Cleanup", RegisteredTaskObjectLifetime.Build) == null)
-            {
-                configuration.BuildEngine4.RegisterTaskObject(
-                    key + ".Cleanup",
-                    new DisposableAction(async () => await reader.CloseWorkspaceAsync()),
-                    RegisteredTaskObjectLifetime.Build,
-                    false);
-            }
-
-            return reader;
-        }
-
         private readonly string msBuildBinPath;
         private readonly bool debugConsole;
         private readonly string readerExe;

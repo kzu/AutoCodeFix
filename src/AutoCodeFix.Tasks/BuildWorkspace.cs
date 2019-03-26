@@ -21,38 +21,6 @@ namespace AutoCodeFix
         static BuildWorkspace()
             => AppContext.SetSwitch("IsBuildTime", true);
 
-        public static BuildWorkspace GetWorkspace(IBuildConfiguration configuration)
-        {
-            // TODO: could we keep the workspace alive while building inside VS?
-            // Loading everything during build takes a constant 21'' for our stunts 
-            // solution, which is unacceptable for every build, unless it's a 
-            // command line build.
-            var lifetime = configuration.BuildingInsideVisualStudio ?
-                RegisteredTaskObjectLifetime.AppDomain :
-                RegisteredTaskObjectLifetime.Build;
-            var key = typeof(BuildWorkspace).FullName;
-            if (!(configuration.BuildEngine4.GetRegisteredTaskObject(key, lifetime) is BuildWorkspace workspace))
-            {
-                var watch = Stopwatch.StartNew();
-                workspace = new BuildWorkspace(configuration);
-                configuration.BuildEngine4.RegisterTaskObject(key, workspace, lifetime, false);
-                watch.Stop();
-                configuration.LogMessage($"Initialized workspace in {watch.Elapsed.Milliseconds} milliseconds", MessageImportance.Low);
-            }
-
-            // Register a per-build cleaner so we can cleanup the in-memory solution information.
-            if (configuration.BuildEngine4.GetRegisteredTaskObject(key + ".Cleanup", RegisteredTaskObjectLifetime.Build) == null)
-            {
-                configuration.BuildEngine4.RegisterTaskObject(
-                    key + ".Cleanup", 
-                    new DisposableAction(() => workspace.ClearSolution()),
-                    RegisteredTaskObjectLifetime.Build, 
-                    false);
-            }
-
-            return workspace;
-        }
-
         readonly IBuildConfiguration configuration;
 
         public BuildWorkspace(IBuildConfiguration configuration)
@@ -145,6 +113,8 @@ namespace AutoCodeFix
 
             return project;
         }
+
+        internal void Cleanup() => ClearSolution();
 
         private async Task<Project> AddProjectAsync(ProjectReader reader, string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
         {

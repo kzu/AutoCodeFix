@@ -19,7 +19,7 @@ using Xamarin.Build;
 
 namespace AutoCodeFix
 {
-    public class ApplyCodeFixes : AsyncTask, IBuildConfiguration
+    public class ApplyCodeFixes : AsyncTask
     {
         static readonly Version MinRoslynVersion = new Version(1, 2);
 
@@ -33,12 +33,6 @@ namespace AutoCodeFix
         /// </summary>
         [Required]
         public ITaskItem[] AssemblySearchPath { get; set; }
-
-        [Required]
-        public string MSBuildBinPath { get; set; }
-
-        [Required]
-        public string ToolsPath { get; set; }
 
         [Required]
         public ITaskItem[] AutoCodeFixIds { get; set; }
@@ -62,20 +56,12 @@ namespace AutoCodeFix
         public bool DebugAutoCodeFix { get; set; }
 
         /// <summary>
-        /// Whether to cause the project reader console program to launch a debugger on run 
-        /// for troubleshooting purposes.
-        /// </summary>
-        public bool DebugProjectReader { get; set; }
-
-        /// <summary>
         /// Logging verbosity for reporting.
         /// </summary>
         public string Verbosity { get; set; }
 
         [Output]
         public ITaskItem[] GeneratedFiles { get; set; }
-
-        IDictionary<string, string> IBuildConfiguration.GlobalProperties => BuildEngine.GetGlobalProperties();
 
         public override bool Execute()
         {
@@ -102,34 +88,19 @@ namespace AutoCodeFix
             }
         }
 
-        void IBuildConfiguration.LogMessage(string message, MessageImportance importance)
-            => LogMessage(message, Importance(importance));
-
-        MessageImportance Importance(MessageImportance importance)
-        {
-            if (verbosity == null)
-                return importance;
-
-            if (verbosity == LoggerVerbosity.Quiet)
-                return MessageImportance.Low;
-
-            if (verbosity >= LoggerVerbosity.Detailed)
-                return MessageImportance.High;
-
-            return importance;
-        }
-
         private async Task ExecuteAsync()
         {
             try
             {
-                LogMessage("Applying code fixes...", Importance(MessageImportance.Normal));
+                LogMessage("Applying code fixes...", MessageImportance.Normal.ForVerbosity(verbosity));
 
                 var watch = Stopwatch.StartNew();
-                LogMessage("Getting Workspace...", Importance(MessageImportance.Low));
-                var workspace = this.GetWorkspace();
-                LogMessage("Getting Project...", Importance(MessageImportance.Low));
-                var project = await workspace.GetOrAddProjectAsync(this.GetProjectReader(), ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                LogMessage("Getting Workspace...", MessageImportance.Low.ForVerbosity(verbosity));
+                var workspace = BuildEngine4.GetRegisteredTaskObject<BuildWorkspace>(BuildingInsideVisualStudio);
+                LogMessage("Getting Project...", MessageImportance.Low.ForVerbosity(verbosity));
+                var project = await workspace.GetOrAddProjectAsync(
+                    BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio), 
+                    ProjectFullPath, (i, m) => LogMessage(m, i), Token);
 
                 // Locate our settings ini file
                 var settings = AdditionalFiles.Select(x => x.GetMetadata("FullPath")).FirstOrDefault(x => x.EndsWith("AutoCodeFix.ini"));
@@ -144,13 +115,13 @@ namespace AutoCodeFix
 
                 watch.Stop();
 
-                LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
+                LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
 
                 var fixableIds = new HashSet<string>(AutoCodeFixIds.Select(x => x.ItemSpec));
 
                 watch = Stopwatch.StartNew();
 
-                var analyzerAssemblies = this.LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToArray();
+                var analyzerAssemblies = LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToArray();
 
                 var analyzers = analyzerAssemblies
                     .SelectMany(GetTypes)
@@ -162,7 +133,7 @@ namespace AutoCodeFix
                     .ToImmutableArray();
 
                 watch.Stop();
-                LogMessage($"Loaded applicable analyzers in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
+                LogMessage($"Loaded applicable analyzers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -182,7 +153,7 @@ namespace AutoCodeFix
                     .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
 
                 watch.Stop();
-                LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", Importance(MessageImportance.Low));
+                LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -240,7 +211,7 @@ namespace AutoCodeFix
 
                 while (diagnostic != null && providers?.Length != 0)
                 {
-                    LogMessage($"Applying code fix for {diagnostic}", Importance(MessageImportance.Normal));
+                    LogMessage($"Applying code fix for {diagnostic}", MessageImportance.Normal.ForVerbosity(verbosity));
                     var document = project.GetDocument(diagnostic.Location.SourceTree);
                     CodeAction codeAction = null;
 
@@ -277,9 +248,11 @@ namespace AutoCodeFix
                                 fixApplied = true;
 
                                 watch.Stop();
-                                LogMessage($"Fixed {diagnostic.Id} in {watch.Elapsed.Milliseconds} milliseconds", Importance(MessageImportance.Low));
+                                LogMessage($"Fixed {diagnostic.Id} in {watch.Elapsed.Milliseconds} milliseconds", MessageImportance.Low.ForVerbosity(verbosity));
 
-                                project = await workspace.GetOrAddProjectAsync(this.GetProjectReader(), ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                                project = await workspace.GetOrAddProjectAsync(
+                                    BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio), 
+                                    ProjectFullPath, (i, m) => LogMessage(m, i), Token);
 
                                 // We successfully applied one code action for the given diagnostics, 
                                 // consider it fixed even if there are other providers.
@@ -373,6 +346,46 @@ namespace AutoCodeFix
             var compilationOptions = project.CompilationOptions.WithSpecificDiagnosticOptions(immutableOptions);
 
             return compilationOptions;
+        }
+
+        private IEnumerable<Assembly> LoadAnalyzers(bool warn = true)
+        {
+            var analyzers = new List<Assembly>(Analyzers.Length);
+            foreach (var item in Analyzers)
+            {
+                try
+                {
+                    var assembly = Assembly.LoadFrom(item.GetMetadata("FullPath"));
+                    var roslyn = assembly.GetReferencedAssemblies().FirstOrDefault(x => x.Name == "Microsoft.CodeAnalysis");
+                    if (roslyn != null && roslyn.Version < MinRoslynVersion)
+                    {
+                        if (warn)
+                        {
+                            Log.LogWarning(
+                                nameof(AutoCodeFix),
+                                nameof(Resources.ACF001),
+                                null, null, 0, 0, 0, 0,
+                                Resources.ACF001,
+                                item.ItemSpec, nameof(AutoCodeFix), MinRoslynVersion);
+                        }
+                    }
+                    else
+                    {
+                        analyzers.Add(assembly);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.LogWarning(
+                        nameof(AutoCodeFix),
+                        nameof(Resources.ACF002),
+                        null, null, 0, 0, 0, 0,
+                        Resources.ACF002,
+                        item.ItemSpec, e);
+                }
+            }
+
+            return analyzers;
         }
 
         IEnumerable<Type> GetTypes(Assembly assembly)

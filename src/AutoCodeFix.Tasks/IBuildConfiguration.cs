@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
 
 namespace AutoCodeFix
 {
@@ -12,8 +11,6 @@ namespace AutoCodeFix
 
         IDictionary<string, string> GlobalProperties { get; }
 
-        ITaskItem[] Analyzers { get; }
-
         string MSBuildBinPath { get; }
 
         string ToolsPath { get; }
@@ -22,6 +19,6 @@ namespace AutoCodeFix
 
         void LogMessage(string message, MessageImportance importance);
 
-        TaskLoggingHelper Log { get; }
+        //TaskLoggingHelper Log { get; }
     }
 }

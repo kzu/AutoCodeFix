@@ -147,4 +147,10 @@
   <data name="ACF010" xml:space="preserve">
     <value>No analyzer supporting auto fix {0} was found.</value>
   </data>
+  <data name="TaskObjectNotRegistered" xml:space="preserve">
+    <value>Expected an object of type {0} to be registered with the build engine.</value>
+  </data>
+  <data name="TaskObjectWrongType" xml:space="preserve">
+    <value>Expected an object of type {0} to be registered with the build engine, but found object of type {1}.</value>
+  </data>
 </root>
