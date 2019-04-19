@@ -26,6 +26,16 @@ namespace AutoCodeFix.Tests
                 .Run();
 
         [Fact]
+        public void can_apply_StyleCop_batch_code_fix()
+            => Scenario()
+                .UseMSBuild()
+                .UseAutoCodeFix()
+                .When("restoring packages", c => c.Build("Foo.csproj", "Restore").AssertSuccess())
+                .And("building project", c => c.Build("Foo.csproj", "Build"))
+                .Then("build succeeds", c => c.AssertSuccess())
+                .Run();
+
+        [Fact]
         public void can_apply_RefactoringEssentials_code_fix_automatically()
             => Scenario()
                 .UseMSBuild()

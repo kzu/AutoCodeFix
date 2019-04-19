@@ -107,6 +107,64 @@ public static class Program
 }
 """
 
+  Scenario: Can apply StyleCop batch code fix
+    Given Foo.csproj =
+"""
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <AutoCodeFixVerbosity>Diagnostic</AutoCodeFixVerbosity>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="xunit" Version="2.4.0" PrivateAssets="all" />
+        <PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta009" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Blank line required before single-line comment -->
+        <AutoCodeFix Include="SA1515" />
+    </ItemGroup>
+</Project>
+"""
+    And Class1.cs = 
+"""
+using System;
+using Xunit;
+
+public static class Program
+{
+    public static void Main()
+    {
+        // This comment is not too tight
+        Console.WriteLine("Hello");
+        // This comment is too tight2
+        Console.ReadLine();
+        // This comment is too tight3
+    }
+}
+"""
+    When restoring packages
+    And building project
+    Then build succeeds
+    And Class1.cs = 
+"""
+using System;
+using Xunit;
+
+public static class Program
+{
+    public static void Main()
+    {
+        // This comment is not too tight
+        Console.WriteLine("Hello");
+
+        // This comment is too tight2
+        Console.ReadLine();
+
+        // This comment is too tight3
+    }
+}
+"""
+
   Scenario: Can apply RefactoringEssentials code fix automatically
     Given Foo.csproj =
 """

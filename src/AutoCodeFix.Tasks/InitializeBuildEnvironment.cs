@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -99,6 +100,10 @@ namespace AutoCodeFix
             if (!(BuildEngine4.GetRegisteredTaskObject(key, lifetime) is ProjectReader reader))
             {
                 LogMessage($"Initializing project reader...", MessageImportance.Low.ForVerbosity(verbosity));
+                var properties = BuildEngine.GetGlobalProperties();
+                LogMessage($@"Determined global properties to use: 
+{string.Join(Environment.NewLine, properties.Select(p => $"\t{p.Key}={p.Value}"))}", MessageImportance.Low.ForVerbosity(verbosity));
+
                 reader = new ProjectReader(MSBuildBinPath, ToolsPath, DebugProjectReader, BuildEngine.GetGlobalProperties());
 
                 BuildEngine4.RegisterTaskObject(key, reader, lifetime, false);

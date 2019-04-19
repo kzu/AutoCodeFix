@@ -16,7 +16,9 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
+using StyleCopTester;
 using Xamarin.Build;
+using Humanizer;
 
 namespace AutoCodeFix
 {
@@ -102,7 +104,7 @@ namespace AutoCodeFix
                 var workspace = BuildEngine4.GetRegisteredTaskObject<BuildWorkspace>(BuildingInsideVisualStudio);
                 LogMessage("Getting Project...", MessageImportance.Low.ForVerbosity(verbosity));
                 var project = await workspace.GetOrAddProjectAsync(
-                    BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio), 
+                    BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
                     ProjectFullPath, (i, m) => LogMessage(m, i), Token);
 
                 // Locate our settings ini file
@@ -112,17 +114,17 @@ namespace AutoCodeFix
                     workspace.TryApplyChanges(project
                         .AddAdditionalDocument(Path.GetFileName(settings), File.ReadAllText(settings), filePath: settings)
                         .Project.Solution);
-                    
+
                     project = workspace.CurrentSolution.GetProject(project.Id);
                 }
 
                 watch.Stop();
 
-                LogMessage($"Loaded {project.Name} in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Loaded {project.Name} in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 var fixableIds = new HashSet<string>(AutoCodeFixIds.Select(x => x.ItemSpec));
 
-                watch = Stopwatch.StartNew();
+                watch.Restart();
 
                 var analyzerAssemblies = LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToArray();
 
@@ -136,11 +138,11 @@ namespace AutoCodeFix
                     .ToImmutableArray();
 
                 watch.Stop();
-                LogMessage($"Loaded applicable analyzers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Loaded applicable analyzers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
-                watch = Stopwatch.StartNew();
+                watch.Restart();
 
                 // We filter all available codefix providers to only those that support the project language and can 
                 // fix any of the generator diagnostic codes we received. 
@@ -154,7 +156,7 @@ namespace AutoCodeFix
                     .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
 
                 watch.Stop();
-                LogMessage($"Loaded applicable code fix providers in {watch.Elapsed.TotalSeconds} seconds", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Loaded applicable code fix providers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -186,7 +188,7 @@ namespace AutoCodeFix
 
                 project = workspace.CurrentSolution.GetProject(project.Id);
 
-                watch = Stopwatch.StartNew();
+                watch.Restart();
 
                 var additionalFiles = ImmutableArray.Create(AdditionalFiles == null ? Array.Empty<AdditionalText>() :
                     AdditionalFiles
@@ -196,26 +198,25 @@ namespace AutoCodeFix
 
                 // TODO: upcoming editorconfig-powered options available to Analyzers would 
                 // not work if we invoke them like this. See how the editor options can be 
-                // retrieved and passed properly here.
+                // retrieved and passed properly here. See https://github.com/dotnet/roslyn/projects/18
                 var options = new AnalyzerOptions(additionalFiles);
 
-                async Task<(Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
+                async Task<(ImmutableArray<Diagnostic>, Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
                 {
                     var compilation = await project.GetCompilationAsync(Token);
 
                     var analyzed = compilation.WithAnalyzers(analyzers, options);
-                    var diagnostics = await analyzed.GetAnalyzerDiagnosticsAsync(analyzers, Token);
-                    var nextDiagnostic = diagnostics.FirstOrDefault(d => fixableIds.Contains(d.Id));
+                    var allDiagnostics = await analyzed.GetAnalyzerDiagnosticsAsync(analyzers, Token);
+                    var nextDiagnostic = allDiagnostics.FirstOrDefault(d => fixableIds.Contains(d.Id));
                     var nextProviders = nextDiagnostic == null ? null : allProviders[nextDiagnostic.Id];
 
-                    return (nextDiagnostic, nextProviders);
+                    return (allDiagnostics, nextDiagnostic, nextProviders);
                 }
 
-                var (diagnostic, providers) = await GetNextFixableDiagnostic();
+                var (diagnostics, diagnostic, providers) = await GetNextFixableDiagnostic();
 
                 while (diagnostic != null && providers?.Length != 0)
                 {
-                    LogMessage($"Applying code fix for {diagnostic}", MessageImportance.Normal.ForVerbosity(verbosity));
                     var document = project.GetDocument(diagnostic.Location.SourceTree);
                     CodeAction codeAction = null;
 
@@ -236,62 +237,111 @@ namespace AutoCodeFix
                         if (codeAction == null)
                             continue;
 
-                        try
+                        // See if we can get a FixAll provider for the diagnostic we are trying to fix.
+                        if (provider.GetFixAllProvider() is FixAllProvider fixAll &&
+                            fixAll != null &&
+                            fixAll.GetSupportedFixAllDiagnosticIds(provider).Contains(diagnostic.Id) && 
+                            fixAll.GetSupportedFixAllScopes().Contains(FixAllScope.Project))
                         {
-                            var operations = await codeAction.GetOperationsAsync(Token);
-                            var applyChanges = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
-
-                            if (applyChanges != null)
+                            var group = await CodeFixEquivalenceGroup.CreateAsync(provider, ImmutableDictionary.CreateRange(new []
                             {
-                                applyChanges.Apply(workspace, Token);
+                                new KeyValuePair<ProjectId, ImmutableArray<Diagnostic>>(project.Id, diagnostics)
+                            }), project.Solution, Token);
 
-                                // According to https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/935 and 
-                                // https://github.com/dotnet/roslyn-sdk/issues/140, Sam Harwell mentioned that we should 
-                                // be forcing a re-parse of the document syntax tree at this point. 
-                                var newDoc = await workspace.CurrentSolution.GetDocument(document.Id).RecreateDocumentAsync(Token);
-                                workspace.TryApplyChanges(newDoc.Project.Solution);
+                            // TODO: should we only apply one equivalence group at a time? See https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/StyleCop.Analyzers/StyleCopTester/Program.cs#L330
+                            if (group.Length > 0)
+                            {
+                                LogMessage($"Applying code fix for {diagnostic.Id}: {diagnostic.Descriptor.Title}", MessageImportance.Normal.ForVerbosity(verbosity));
+                                var fixAllWatch = Stopwatch.StartNew();
+                                foreach (var fix in group)
+                                {
+                                    try
+                                    {
+                                        LogMessage($"Calculating fix for {fix.NumberOfDiagnostics} instances.", MessageImportance.Low.ForVerbosity(verbosity));
+                                        var operations = await fix.GetOperationsAsync(Token);
+                                        var fixAllChanges = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
+                                        if (fixAllChanges != null)
+                                        {
+                                            fixAllChanges.Apply(workspace, Token);
+                                            fixApplied = true;
+                                            appliedFixes[diagnostic.Id] = appliedFixes.GetOrAdd(diagnostic.Id, 0) + fix.NumberOfDiagnostics;
+                                            project = workspace.CurrentSolution.GetProject(project.Id);
+                                            watch.Stop();
+                                        }
 
-                                fixApplied = true;
-
-                                watch.Stop();
-                                LogMessage($"Fixed {diagnostic.Id} in {watch.Elapsed.Milliseconds} milliseconds", MessageImportance.Low.ForVerbosity(verbosity));
-
-                                project = await workspace.GetOrAddProjectAsync(
-                                    BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio), 
-                                    ProjectFullPath, (i, m) => LogMessage(m, i), Token);
-
-                                // We successfully applied one code action for the given diagnostics, 
-                                // consider it fixed even if there are other providers.
-                                break;
+                                        LogMessage($"Applied changes in {TimeSpan.FromMilliseconds(fixAllWatch.ElapsedMilliseconds).Humanize()}. This is {fix.NumberOfDiagnostics / fixAllWatch.Elapsed.TotalSeconds:0.000} instances/second.", MessageImportance.Low.ForVerbosity(verbosity));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Report thrown exceptions
+                                        LogMessage($"The fix '{fix.CodeFixEquivalenceKey}' failed after {TimeSpan.FromMilliseconds(fixAllWatch.ElapsedMilliseconds).Humanize()}: {ex.ToString()}", MessageImportance.High.ForVerbosity(verbosity));
+                                    }
+                                }
                             }
-                            else
+                        }
+
+                        // Try applying the individual fix in a specific document
+                        if (!fixApplied)
+                        {
+                            try
+                            {
+                                LogMessage($"Applying code fix for {diagnostic}", MessageImportance.Normal.ForVerbosity(verbosity));
+                                var operations = await codeAction.GetOperationsAsync(Token);
+                                var applyChanges = operations.OfType<ApplyChangesOperation>().FirstOrDefault();
+
+                                if (applyChanges != null)
+                                {
+                                    applyChanges.Apply(workspace, Token);
+
+                                    // According to https://github.com/DotNetAnalyzers/StyleCopAnalyzers/pull/935 and 
+                                    // https://github.com/dotnet/roslyn-sdk/issues/140, Sam Harwell mentioned that we should 
+                                    // be forcing a re-parse of the document syntax tree at this point. 
+                                    var newDoc = await workspace.CurrentSolution.GetDocument(document.Id).RecreateDocumentAsync(Token);
+                                    workspace.TryApplyChanges(newDoc.Project.Solution);
+
+                                    fixApplied = true;
+                                    appliedFixes[diagnostic.Id] = appliedFixes.GetOrAdd(diagnostic.Id, 0) + 1;
+                                    watch.Stop();
+
+                                    project = await workspace.GetOrAddProjectAsync(
+                                        BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
+                                        ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+
+                                    // We successfully applied one code action for the given diagnostics, 
+                                    // consider it fixed even if there are other providers.
+                                    break;
+                                }
+                                else
+                                {
+                                    Log.LogError(
+                                        nameof(AutoCodeFix),
+                                        nameof(Resources.ACF008),
+                                        diagnostic.Location.GetLineSpan().Path,
+                                        diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
+                                        diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
+                                        diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
+                                        diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
+                                        Resources.ACF008,
+                                        codeAction.Title, diagnostic.Id, diagnostic.GetMessage());
+                                    Cancel();
+                                    return;
+                                }
+                            }
+                            catch (Exception e)
                             {
                                 Log.LogError(
                                     nameof(AutoCodeFix),
-                                    nameof(Resources.ACF008),
+                                    nameof(Resources.ACF006),
                                     diagnostic.Location.GetLineSpan().Path,
                                     diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
                                     diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
                                     diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
                                     diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
-                                    Resources.ACF008,
-                                    codeAction.Title, diagnostic.Id, diagnostic.GetMessage());
+                                    Resources.ACF006,
+                                    codeAction.Title, diagnostic.Id, diagnostic.GetMessage(), e);
                                 Cancel();
+                                return;
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            Log.LogError(
-                                nameof(AutoCodeFix),
-                                nameof(Resources.ACF006),
-                                diagnostic.Location.GetLineSpan().Path,
-                                diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1,
-                                diagnostic.Location.GetLineSpan().StartLinePosition.Character + 1,
-                                diagnostic.Location.GetLineSpan().EndLinePosition.Line + 1,
-                                diagnostic.Location.GetLineSpan().EndLinePosition.Character + 1,
-                                Resources.ACF006,
-                                codeAction.Title, diagnostic.Id, diagnostic.GetMessage(), e);
-                            Cancel();
                         }
                     }
 
@@ -309,20 +359,21 @@ namespace AutoCodeFix
                             Resources.ACF007,
                             diagnostic.Id, diagnostic.GetMessage());
                         Cancel();
+                        return;
                     }
                     else
                     {
-                        appliedFixes[diagnostic.Id] = appliedFixes.GetOrAdd(diagnostic.Id, 0) + 1;
+                        LogMessage($"Fixed {diagnostic.Id} in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
                     }
 
-                    watch = Stopwatch.StartNew();
+                    watch.Restart();
 
-                    (diagnostic, providers) = await GetNextFixableDiagnostic();
+                    (diagnostics, diagnostic, providers) = await GetNextFixableDiagnostic();
                 }
 
                 overallTime.Stop();
-                LogMessage($"Fixed {appliedFixes.Values.Sum()} diagnostics in {overallTime.ElapsedMilliseconds} milliseconds.", MessageImportance.Low.ForVerbosity(verbosity));
-                LogMessage($"Fixed: \r\n{string.Join(Environment.NewLine, appliedFixes.Select(x => $"\t{x.Key}: {x.Value}"))}", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Fixed {appliedFixes.Values.Sum()} diagnostics in {TimeSpan.FromMilliseconds(overallTime.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Fixed: \r\n{string.Join(Environment.NewLine, appliedFixes.Select(x => $"\t{x.Key}: {x.Value} {(x.Value > 1 ? "instances" : "instance" )}"))}", MessageImportance.Low.ForVerbosity(verbosity));
             }
             catch (Exception e)
             {
@@ -335,7 +386,7 @@ namespace AutoCodeFix
             }
         }
 
-        private CompilationOptions CreateCompilationOptions(Project project)
+        CompilationOptions CreateCompilationOptions(Project project)
         {
             // Process diagnostic options and rule set
             var diagnosticOptions = new Dictionary<string, ReportDiagnostic>();
@@ -362,7 +413,7 @@ namespace AutoCodeFix
             return compilationOptions;
         }
 
-        private IEnumerable<Assembly> LoadAnalyzers(bool warn = true)
+        IEnumerable<Assembly> LoadAnalyzers(bool warn = true)
         {
             var analyzers = new List<Assembly>(Analyzers.Length);
             foreach (var item in Analyzers)

@@ -44,6 +44,7 @@
 
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
     <PackageReference Include="StreamJsonRpc" />
+    <PackageReference Include="Humanizer" />
     <PackageReference Include="Xamarin.Build.AsyncTask" Pack="true" />
   </ItemGroup>
 
@@ -66,6 +67,7 @@
     <ItemGroup>
       <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))AutoCodeFix*.*" Kind="$(PrimaryOutputKind)" />
       <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))Xamarin.Build.AsyncTask*.*" Kind="$(PrimaryOutputKind)" />
+      <PackageFile Include="$([MSBuild]::NormalizePath('$(OutputPath)'))Humanizer.dll" Kind="$(PrimaryOutputKind)" />
     </ItemGroup>
   </Target>
 

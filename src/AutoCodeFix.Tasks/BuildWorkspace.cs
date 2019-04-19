@@ -136,7 +136,7 @@ namespace AutoCodeFix
             var language = (string)projectMetadata.Language;
             var output = (OutputKind)Enum.Parse(typeof(OutputKind), (string)projectMetadata.CompilationOptions.OutputKind);
             var platform = (Platform)Enum.Parse(typeof(Platform), (string)projectMetadata.CompilationOptions.Platform);
-
+            
             // Iterate the references of the msbuild project
             var referencesToAdd = new List<ProjectReference>();
             foreach (var projectReference in projectMetadata.ProjectReferences)

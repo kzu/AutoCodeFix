@@ -95,8 +95,14 @@ namespace AutoCodeFix
 
         public async Task CloseWorkspaceAsync()
         {
-            EnsureRunning();
-            await rpc.InvokeAsync(nameof(CloseWorkspaceAsync));
+            if (process != null && !process.HasExited)
+            {
+                try
+                {
+                    await rpc.InvokeAsync(nameof(CloseWorkspaceAsync));
+                }
+                catch { }
+            }
         }
 
         private async Task CreateWorkspaceAsync(IDictionary<string, string> globalProperties)
