@@ -41,13 +41,15 @@ namespace AutoCodeFix
         public ITaskItem[] AutoCodeFixIds { get; set; }
 
         //[Required]
-        public ITaskItem[] Analyzers { get; set; }
+        public ITaskItem[] Analyzers { get; set; } = new ITaskItem[0];
 
-        public ITaskItem[] AdditionalFiles { get; set; }
+        public ITaskItem[] AdditionalFiles { get; set; } = new ITaskItem[0];
 
-        public ITaskItem[] NoWarn { get; set; }
+        public ITaskItem[] NoWarn { get; set; } = new ITaskItem[0];
 
-        public ITaskItem[] WarningsAsErrors { get; set; }
+        public ITaskItem[] WarningsAsErrors { get; set; } = new ITaskItem[0];
+
+        public string PreprocessorSymbols { get; set; } = "";
 
         public string CodeAnalysisRuleSet { get; set; }
 
@@ -61,7 +63,7 @@ namespace AutoCodeFix
         /// <summary>
         /// Logging verbosity for reporting.
         /// </summary>
-        public string Verbosity { get; set; }
+        public string Verbosity { get; set; } = LoggerVerbosity.Normal.ToString();
 
         [Output]
         public ITaskItem[] GeneratedFiles { get; set; }
@@ -95,7 +97,7 @@ namespace AutoCodeFix
         {
             try
             {
-                LogMessage("Applying code fixes...", MessageImportance.Normal.ForVerbosity(verbosity));
+                LogMessage("Applying code fixes...", MessageImportance.Low.ForVerbosity(verbosity));
                 var overallTime = Stopwatch.StartNew();
                 var appliedFixes = new ConcurrentDictionary<string, int>();
 
@@ -105,7 +107,9 @@ namespace AutoCodeFix
                 LogMessage("Getting Project...", MessageImportance.Low.ForVerbosity(verbosity));
                 var project = await workspace.GetOrAddProjectAsync(
                     BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
-                    ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                    ProjectFullPath, 
+                    PreprocessorSymbols.Split(new [] { ';' }, StringSplitOptions.RemoveEmptyEntries),
+                    (i, m) => LogMessage(m, i), Token);
 
                 // Locate our settings ini file
                 var settings = AdditionalFiles.Select(x => x.GetMetadata("FullPath")).FirstOrDefault(x => x.EndsWith("AutoCodeFix.ini"));
@@ -219,7 +223,7 @@ namespace AutoCodeFix
                 {
                     var document = project.GetDocument(diagnostic.Location.SourceTree);
                     CodeAction codeAction = null;
-
+                    
                     var fixApplied = false;
 
                     foreach (var provider in providers)
@@ -305,7 +309,9 @@ namespace AutoCodeFix
 
                                     project = await workspace.GetOrAddProjectAsync(
                                         BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
-                                        ProjectFullPath, (i, m) => LogMessage(m, i), Token);
+                                        ProjectFullPath,
+                                        PreprocessorSymbols.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries),
+                                        (i, m) => LogMessage(m, i), Token);
 
                                     // We successfully applied one code action for the given diagnostics, 
                                     // consider it fixed even if there are other providers.
@@ -373,7 +379,15 @@ namespace AutoCodeFix
 
                 overallTime.Stop();
                 LogMessage($"Fixed {appliedFixes.Values.Sum()} diagnostics in {TimeSpan.FromMilliseconds(overallTime.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
-                LogMessage($"Fixed: \r\n{string.Join(Environment.NewLine, appliedFixes.Select(x => $"\t{x.Key}: {x.Value} {(x.Value > 1 ? "instances" : "instance" )}"))}", MessageImportance.Low.ForVerbosity(verbosity));
+                if (appliedFixes.Count == 1)
+                {
+                    var appliedFix = appliedFixes.First();
+                    LogMessage($"Fixed {appliedFix.Key} ({appliedFix.Value} {(appliedFix.Value > 1 ? "instances" : "instance")})", MessageImportance.High.ForVerbosity(verbosity));
+                }
+                else
+                {
+                    LogMessage($"Fixed {string.Join(", ", appliedFixes.Select(x => $"{x.Key} ({x.Value} {(x.Value > 1 ? "instances" : "instance")})"))}", MessageImportance.High.ForVerbosity(verbosity));
+                }
             }
             catch (Exception e)
             {

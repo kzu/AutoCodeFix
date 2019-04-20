@@ -107,6 +107,138 @@ public static class Program
 }
 """
 
+  Scenario: Can preserve preprocessor symbols
+    Given Foo.csproj =
+"""
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <DefineConstants>$(DefineConstants);TEST</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Remove unused parameter -->
+        <AutoCodeFix Include="CA1801" />
+        <!-- Mark method shared -->
+        <AutoCodeFix Include="CA1822" />
+    </ItemGroup>
+</Project>
+"""
+    And Class1.cs = 
+""" 
+public class Class1
+{
+#if TEST
+    public void Main(string[] args)
+    {
+        System.Console.WriteLine("Hello World!");
+    }
+#endif
+}
+"""
+    When restoring packages
+    And building project
+    Then build succeeds
+    And Class1.cs = 
+"""
+public class Class1
+{
+#if TEST
+    public static void Main()
+    {
+        System.Console.WriteLine("Hello World!");
+    }
+#endif
+}
+"""
+
+  Scenario: Can preserve preprocessor symbols VB
+    Given Foo.vbproj =
+"""
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <DefineConstants>TEST=-1</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Remove unused parameter -->
+        <AutoCodeFix Include="CA1801" />
+        <!-- Mark method shared -->
+        <AutoCodeFix Include="CA1822" />
+    </ItemGroup>
+</Project>
+"""
+    And Class1.vb = 
+""" 
+Public Class Class1
+#If TEST Then
+    Public Sub Main(ByVal count As Integer)
+        Console.ReadLine()
+    End Sub
+#End If
+End Class
+"""
+    When restoring packages
+    And building project
+    Then build succeeds
+    And Class1.vb = 
+"""
+Public Class Class1
+#If TEST Then
+    Public Shared Sub Main()
+        Console.ReadLine()
+    End Sub
+#End If
+End Class
+"""
+
+  Scenario: Can apply NET analyzer code fix automatically in VB
+    Given Foo.vbproj =
+"""
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Remove unused parameter -->
+        <AutoCodeFix Include="CA1801" />
+        <!-- Mark method shared -->
+        <AutoCodeFix Include="CA1822" />
+    </ItemGroup>
+</Project>
+"""
+    And Class1.vb = 
+""" 
+Public Class Class1
+
+    Public Sub Main(ByVal count As Integer)
+        Console.ReadLine()
+    End Sub
+
+End Class
+"""
+    When restoring packages
+    And building project
+    Then build succeeds
+    And Class1.vb = 
+"""
+Public Class Class1
+
+    Public Shared Sub Main()
+        Console.ReadLine()
+    End Sub
+
+End Class
+"""
+
   Scenario: Can apply StyleCop batch code fix
     Given Foo.csproj =
 """

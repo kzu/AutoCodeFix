@@ -67,14 +67,20 @@
       <Output TaskParameter="ResolvedCodeAnalysisRuleSet" ItemName="CustomAdditionalCompileInputs" />
     </ResolveCodeAnalysisRuleSet>
 
+    <PropertyGroup>
+      <PreprocessorSymbols Condition="'$(Language)' == 'VB'">$(FinalDefineConstants.Replace(',', ';'))</PreprocessorSymbols>
+      <PreprocessorSymbols Condition="'$(PreprocessorSymbols)' == ''">$(DefineConstants)</PreprocessorSymbols>
+    </PropertyGroup>
+
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
-                    AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
+                    AdditionalFiles="@(AdditionalFiles)"
                     AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
+                    PreprocessorSymbols="$(PreprocessorSymbols)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
                     Verbosity="$(AutoCodeFixVerbosity)"
@@ -147,14 +153,20 @@
       <Output TaskParameter="ResolvedCodeAnalysisRuleSet" ItemName="CustomAdditionalCompileInputs" />
     </ResolveCodeAnalysisRuleSet>
 
+    <PropertyGroup>
+      <PreprocessorSymbols Condition="'$(Language)' == 'VB'">$(FinalDefineConstants.Replace(',', ';'))</PreprocessorSymbols>
+      <PreprocessorSymbols Condition="'$(PreprocessorSymbols)' == ''">$(DefineConstants)</PreprocessorSymbols>
+    </PropertyGroup>
+
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
-                    AdditionalFiles="@(AdditionalFiles);$(_AutoCodeFixIni)"
+                    AdditionalFiles="@(AdditionalFiles)"
                     AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
                     WarningsAsErrors="$(WarningsAsErrors)"
+                    PreprocessorSymbols="$(PreprocessorSymbols)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
                     Verbosity="$(AutoCodeFixVerbosity)" />

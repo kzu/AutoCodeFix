@@ -92,7 +92,8 @@ namespace AutoCodeFix
             }
         }
 
-        public async Task<Project> GetOrAddProjectAsync(ProjectReader reader, string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
+        public async Task<Project> GetOrAddProjectAsync(ProjectReader reader, string projectFullPath, 
+            IEnumerable<string> preprocessorSymbols, Action<MessageImportance, string> log, CancellationToken cancellation)
         {
             projectFullPath = new FileInfo(projectFullPath).FullName;
             // Ensure full project paths always.
@@ -107,7 +108,7 @@ namespace AutoCodeFix
                 return project;
             }
 
-            project = await AddProjectAsync(reader, projectFullPath, log, cancellation);
+            project = await AddProjectAsync(reader, projectFullPath, preprocessorSymbols, log, cancellation);
 
             TryApplyChanges(CurrentSolution);
 
@@ -116,19 +117,19 @@ namespace AutoCodeFix
 
         internal void Cleanup() => ClearSolution();
 
-        private async Task<Project> AddProjectAsync(ProjectReader reader, string projectFullPath, Action<MessageImportance, string> log, CancellationToken cancellation)
+        private async Task<Project> AddProjectAsync(ProjectReader reader, string projectFullPath, IEnumerable<string> preprocessorSymbols, Action<MessageImportance, string> log, CancellationToken cancellation)
         {
             var watch = Stopwatch.StartNew();
 
             var metadata = await reader.OpenProjectAsync(projectFullPath);
             log(MessageImportance.Low, $"Read '{Path.GetFileName(projectFullPath)}' metadata in {watch.Elapsed.TotalSeconds} seconds.");
 
-            var project = await AddProjectFromMetadataAsync(metadata, log, cancellation);
+            var project = await AddProjectFromMetadataAsync(metadata, preprocessorSymbols, log, cancellation);
 
             return project;
         }
 
-        private async Task<Project> AddProjectFromMetadataAsync(dynamic projectMetadata, Action<MessageImportance, string> log, CancellationToken cancellation)
+        private async Task<Project> AddProjectFromMetadataAsync(dynamic projectMetadata, IEnumerable<string> preprocessorSymbols, Action<MessageImportance, string> log, CancellationToken cancellation)
         {
             var watch = Stopwatch.StartNew();
 
@@ -148,7 +149,7 @@ namespace AutoCodeFix
                 } 
                 else
                 {
-                    referencedProject = await AddProjectFromMetadataAsync(projectReference, log, cancellation);
+                    referencedProject = await AddProjectFromMetadataAsync(projectReference, preprocessorSymbols, log, cancellation);
                 }
 
                 referencesToAdd.Add(new ProjectReference(referencedProject.Id));
@@ -171,10 +172,9 @@ namespace AutoCodeFix
                         ? (CompilationOptions)new CSharpCompilationOptions(output, platform: platform)
                         : (CompilationOptions)new VisualBasicCompilationOptions(output, platform: platform), 
                     parseOptions: (language == LanguageNames.CSharp
-                        ? (ParseOptions)new CSharpParseOptions(documentationMode: DocumentationMode.None)
-                        : (ParseOptions)new VisualBasicParseOptions(documentationMode: DocumentationMode.None))
-                        // \o/: Allows code fixes to know the intermediate output path for generated code.
-                        .WithFeatures(new[] { new KeyValuePair<string, string>("IntermediateOutputPath", (string)projectMetadata.IntermediateOutputPath) })
+                        ? (ParseOptions)new CSharpParseOptions(documentationMode: DocumentationMode.None, preprocessorSymbols: preprocessorSymbols.ToArray())
+                        : (ParseOptions)new VisualBasicParseOptions(documentationMode: DocumentationMode.None,
+                            preprocessorSymbols: preprocessorSymbols.Select(x => x.Split('=')).Select(x => new KeyValuePair<string, object>(x[0], x.Skip(1).FirstOrDefault()?.Trim('"')))))
                 )
             );
 
