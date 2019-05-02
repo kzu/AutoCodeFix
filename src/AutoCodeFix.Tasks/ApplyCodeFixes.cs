@@ -104,9 +104,10 @@ namespace AutoCodeFix
                 var overallTime = Stopwatch.StartNew();
                 var appliedFixes = new ConcurrentDictionary<string, int>();
 
-                var watch = Stopwatch.StartNew();
                 LogMessage("Getting Workspace...", MessageImportance.Low.ForVerbosity(verbosity));
                 var workspace = BuildEngine4.GetRegisteredTaskObject<BuildWorkspace>(BuildingInsideVisualStudio);
+
+                var watch = Stopwatch.StartNew();
                 LogMessage("Getting Project...", MessageImportance.Low.ForVerbosity(verbosity));
                 var project = await workspace.GetOrAddProjectAsync(
                     BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
@@ -210,12 +211,19 @@ namespace AutoCodeFix
 
                 async Task<(ImmutableArray<Diagnostic>, Diagnostic, CodeFixProvider[])> GetNextFixableDiagnostic()
                 {
+                    var getNextWatch = Stopwatch.StartNew();
                     var compilation = await project.GetCompilationAsync(Token);
 
                     var analyzed = compilation.WithAnalyzers(analyzers, options);
                     var allDiagnostics = await analyzed.GetAnalyzerDiagnosticsAsync(analyzers, Token);
                     var nextDiagnostic = allDiagnostics.FirstOrDefault(d => fixableIds.Contains(d.Id));
                     var nextProviders = nextDiagnostic == null ? null : allProviders[nextDiagnostic.Id];
+
+                    getNextWatch.Stop();
+                    if (nextDiagnostic == null)
+                        LogMessage($"Did not find more fixable diagnostics in {TimeSpan.FromMilliseconds(getNextWatch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+                    else
+                        LogMessage($"Found fixable diagnostic {nextDiagnostic.Id} in {TimeSpan.FromMilliseconds(getNextWatch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                     return (allDiagnostics, nextDiagnostic, nextProviders);
                 }
@@ -258,7 +266,7 @@ namespace AutoCodeFix
                             // TODO: should we only apply one equivalence group at a time? See https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/StyleCop.Analyzers/StyleCopTester/Program.cs#L330
                             if (group.Length > 0)
                             {
-                                LogMessage($"Applying code fix for {diagnostic.Id}: {diagnostic.Descriptor.Title}", MessageImportance.Normal.ForVerbosity(verbosity));
+                                LogMessage($"Applying batch code fix for {diagnostic.Id}: {diagnostic.Descriptor.Title}", MessageImportance.Normal.ForVerbosity(verbosity));
                                 var fixAllWatch = Stopwatch.StartNew();
                                 foreach (var fix in group)
                                 {
@@ -276,7 +284,7 @@ namespace AutoCodeFix
                                             watch.Stop();
                                         }
 
-                                        LogMessage($"Applied changes in {TimeSpan.FromMilliseconds(fixAllWatch.ElapsedMilliseconds).Humanize()}. This is {fix.NumberOfDiagnostics / fixAllWatch.Elapsed.TotalSeconds:0.000} instances/second.", MessageImportance.Low.ForVerbosity(verbosity));
+                                        LogMessage($"Applied batch changes in {TimeSpan.FromMilliseconds(fixAllWatch.ElapsedMilliseconds).Humanize()}. This is {fix.NumberOfDiagnostics / fixAllWatch.Elapsed.TotalSeconds:0.000} instances/second.", MessageImportance.Low.ForVerbosity(verbosity));
                                     }
                                     catch (Exception ex)
                                     {
@@ -381,7 +389,7 @@ namespace AutoCodeFix
                 }
 
                 overallTime.Stop();
-                LogMessage($"Fixed {appliedFixes.Values.Sum()} diagnostics in {TimeSpan.FromMilliseconds(overallTime.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Overall processing for {appliedFixes.Values.Sum()} fixes took {TimeSpan.FromMilliseconds(overallTime.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
                 if (appliedFixes.Count == 1)
                 {
                     var appliedFix = appliedFixes.First();
