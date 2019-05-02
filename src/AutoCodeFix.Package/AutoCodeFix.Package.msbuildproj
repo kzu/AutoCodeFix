@@ -42,9 +42,9 @@
   </ItemGroup>
 
   <Target Name="DeployPackage" AfterTargets="AfterBuild;Pack" DependsOnTargets="Pack">
-    <Message Text="Nuking $(LocalAppData)\NuGet\v3-cache)" Condition="Exists('$(LocalAppData)\NuGet\v3-cache)')" />
+    <Message Text="Nuking $(LocalAppData)\NuGet\v3-cache)" Condition="Exists('$(LocalAppData)\NuGet\v3-cache)')" Importance="high" />
     <Exec Command='rd "$(LocalAppData)\NuGet\v3-cache)" /q /s' Condition="Exists('$(LocalAppData)\NuGet\v3-cache)')" />
-    <Message Text="Nuking $(NuGetPackageRoot)$(PackageId.ToLowerInvariant())" Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" />
+    <Message Text="Nuking $(NuGetPackageRoot)$(PackageId.ToLowerInvariant())" Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" Importance="high" />
     <Exec Command='rd "$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())" /q /s' Condition="Exists('$(NuGetPackageRoot)$(PackageId.ToLowerInvariant())')" />
     <ItemGroup>
       <_ToDelete Include="$(TEMP)\packages\$(PackageId)*.nupkg" />
@@ -53,6 +53,7 @@
     <Delete Files="@(ToDelete)" />
     <MakeDir Directories="$(TEMP)\packages" Condition="!Exists('$(TEMP)\packages')" />
     <Copy SourceFiles="$(PackageTargetPath)" DestinationFolder="$(TEMP)\packages" />
+    <Message Importance="high" Text="$(PackageTargetPath) -&gt; $(TEMP)\packages\$([System.IO.Path]::GetFilename($(PackageTargetPath)))" />
   </Target>
 
   <Target Name="CompileDesignTime" />
