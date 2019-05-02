@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.Config = NuGet.Config
 		src\Packages.props = src\Packages.props
 		README.md = README.md
-		VERSION = VERSION
+		src\VERSION = src\VERSION
 		src\Version.targets = src\Version.targets
 	EndProjectSection
 EndProject
