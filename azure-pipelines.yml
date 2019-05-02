@@ -14,9 +14,9 @@ steps:
   displayName: Test
   inputs:
     testAssemblyVer2: src\AutoCodeFix.Tests\bin\*\AutoCodeFix.Tests.dll
-    runInParallel: 'true'
-    codeCoverageEnabled: 'true'
-    publishRunAttachments: 'true'
+    runInParallel: true
+    codeCoverageEnabled: true
+    diagnosticsEnabled: false
 
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
