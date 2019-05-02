@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <GitThisAssemblyMetadata>false</GitThisAssemblyMetadata>
-    <GitVersionFile>$(MSBuildThisFileDirectory)..\VERSION</GitVersionFile>
+    <GitVersionFile>$(MSBuildThisFileDirectory)VERSION</GitVersionFile>
     <GitSkipCache>true</GitSkipCache>
   </PropertyGroup>
 
@@ -32,7 +32,7 @@
       <VersionMetadata Include="sha.$(GitCommit)"/>
 
       <VersionMetadata Condition="$(CI)" 
-                       Include="build.$(BUILD_BUILDID)"/>
+                       Include="azdo.$(BUILD_BUILDID)"/>
     </ItemGroup>
 
     <PropertyGroup>
