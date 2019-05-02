@@ -116,7 +116,7 @@ public static class Program
         <DefineConstants>$(DefineConstants);TEST</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="2.9.2" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
         <!-- Remove unused parameter -->
@@ -163,7 +163,7 @@ public class Class1
         <DefineConstants>TEST=-1</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="2.9.2" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
         <!-- Remove unused parameter -->
@@ -205,7 +205,7 @@ End Class
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="*" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="2.9.2" PrivateAssets="all" />
     </ItemGroup>
     <ItemGroup>
         <!-- Remove unused parameter -->
