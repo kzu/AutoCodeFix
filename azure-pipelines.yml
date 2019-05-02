@@ -17,6 +17,7 @@ steps:
     runInParallel: true
     codeCoverageEnabled: true
     diagnosticsEnabled: false
+  timeoutInMinutes: 10
 
 - task: PublishBuildArtifacts@1
   displayName: Publish Artifact
