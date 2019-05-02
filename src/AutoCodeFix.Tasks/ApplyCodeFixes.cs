@@ -40,6 +40,9 @@ namespace AutoCodeFix
         [Required]
         public ITaskItem[] AutoCodeFixIds { get; set; }
 
+        [Required]
+        public string Language { get; set; }
+
         //[Required]
         public ITaskItem[] Analyzers { get; set; } = new ITaskItem[0];
 

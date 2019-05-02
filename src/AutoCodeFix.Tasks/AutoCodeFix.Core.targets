@@ -74,6 +74,7 @@
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
+                    Language="$(Language)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles)"
@@ -160,6 +161,7 @@
 
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
+                    Language="$(Language)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     AdditionalFiles="@(AdditionalFiles)"
