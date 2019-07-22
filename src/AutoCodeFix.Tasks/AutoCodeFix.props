@@ -1,0 +1,5 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Extensibility point for consumers that want to get notified after code fixes were applied. 
+       Can be redeclared by a project -->
+  <Target Name="AfterAutoCodeFix" />
+</Project>

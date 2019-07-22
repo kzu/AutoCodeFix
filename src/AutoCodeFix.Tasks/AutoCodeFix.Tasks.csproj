@@ -23,9 +23,11 @@
     <None Remove="AutoCodeFix.Core.targets" />
     <None Remove="AutoCodeFix.DesignTime.targets" />
     <None Remove="AutoCodeFix.targets" />
+    <None Remove="AutoCodeFix.props" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="AutoCodeFix.props" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="AutoCodeFix.targets" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="AutoCodeFix.Core.targets" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="AutoCodeFix.DesignTime.targets" CopyToOutputDirectory="PreserveNewest" />

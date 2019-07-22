@@ -91,6 +91,4 @@
     </PropertyGroup>
   </Target>
 
-  <!-- Extensibility point for consumers that want to get notified after code fixes were applied. -->
-  <Target Name="AfterAutoCodeFix" />
 </Project>
