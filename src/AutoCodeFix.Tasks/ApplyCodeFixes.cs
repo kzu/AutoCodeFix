@@ -46,6 +46,8 @@ namespace AutoCodeFix
         //[Required]
         public ITaskItem[] Analyzers { get; set; } = new ITaskItem[0];
 
+        public ITaskItem[] SkipAnalyzers { get; set; } = new ITaskItem[0];
+
         public ITaskItem[] AdditionalFiles { get; set; } = new ITaskItem[0];
 
         public ITaskItem[] NoWarn { get; set; } = new ITaskItem[0];
@@ -69,7 +71,7 @@ namespace AutoCodeFix
         public string Verbosity { get; set; } = LoggerVerbosity.Normal.ToString();
 
         [Output]
-        public ITaskItem[] GeneratedFiles { get; set; }
+        public ITaskItem[] FailedAnalyzers { get; set; } = new ITaskItem[0];
 
         public override bool Execute()
         {
@@ -111,8 +113,8 @@ namespace AutoCodeFix
                 LogMessage("Getting Project...", MessageImportance.Low.ForVerbosity(verbosity));
                 var project = await workspace.GetOrAddProjectAsync(
                     BuildEngine4.GetRegisteredTaskObject<ProjectReader>(BuildingInsideVisualStudio),
-                    ProjectFullPath, 
-                    PreprocessorSymbols.Split(new [] { ';' }, StringSplitOptions.RemoveEmptyEntries),
+                    ProjectFullPath,
+                    PreprocessorSymbols.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries),
                     (i, m) => LogMessage(m, i), Token);
 
                 // Locate our settings ini file
@@ -134,12 +136,80 @@ namespace AutoCodeFix
 
                 watch.Restart();
 
-                var analyzerAssemblies = LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToArray();
+                var analyzerAssemblies = LoadAnalyzers().Concat(MefHostServices.DefaultAssemblies).ToList();
+                var failedAssemblies = new List<Assembly>();
+
+                Dictionary<string, CodeFixProvider[]> allProviders = default;
+
+                while (allProviders == null)
+                {
+                    // We filter all available codefix providers to only those that support the project language and can 
+                    // fix any of the generator diagnostic codes we received. 
+
+                    try
+                    {
+                        allProviders = MefHostServices.Create(analyzerAssemblies)
+                            .GetExports<CodeFixProvider, IDictionary<string, object>>()
+                            .Where(x => ((string[])x.Metadata["Languages"]).Contains(project.Language))
+                            .SelectMany(x => x.Value.FixableDiagnosticIds.Select(id => new { Id = id, Provider = x.Value }))
+                            .Where(x => fixableIds.Contains(x.Id))
+                            .GroupBy(x => x.Id)
+                            .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
+                        break;
+                    }
+                    catch (ReflectionTypeLoadException rle)
+                    {
+                        foreach (var assembly in rle.Types
+                            .Where(t => t != null)
+                            .GroupBy(t => t.Assembly)
+                            .Select(g => g.Key))
+                        {
+                            Log.LogWarning(
+                                nameof(AutoCodeFix),
+                                nameof(Resources.ACF002),
+                                null, null, 0, 0, 0, 0,
+                                Resources.ACF002,
+                                assembly.Location, "Skipping analyer for AutoCodeFix.");
+
+                            failedAssemblies.Add(assembly);
+                            analyzerAssemblies.Remove(assembly);
+                        }
+                    }
+                }
+
+                FailedAnalyzers = failedAssemblies
+                    .Select(asm => Analyzers.FirstOrDefault(i => i.GetMetadata("FullPath") == asm.Location))
+                    .Where(i => i != null)
+                    .Concat(SkipAnalyzers)
+                    .ToArray();
+
+                watch.Stop();
+                LogMessage($"Loaded applicable code fix providers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+
+                Token.ThrowIfCancellationRequested();
+
+                watch.Restart();
 
                 var analyzers = analyzerAssemblies
                     .SelectMany(GetTypes)
                     .Where(t => !t.IsAbstract && typeof(DiagnosticAnalyzer).IsAssignableFrom(t))
-                    .Where(t => t.GetConstructor(Type.EmptyTypes) != null)
+                    .Where(t =>
+                    {
+                        try
+                        {
+                            return t.GetConstructor(Type.EmptyTypes) != null;
+                        }
+                        catch (TargetInvocationException tie)
+                        {
+                            Log.LogWarning(
+                                nameof(AutoCodeFix),
+                                nameof(Resources.ACF004),
+                                null, null, 0, 0, 0, 0,
+                                Resources.ACF004,
+                                t.FullName, tie.InnerException);
+                            return false;
+                        }
+                    })
                     .Select(CreateAnalyzer)
                     // Only keep the analyzers that can fix the diagnostics we were given.
                     .Where(d => d != null && d.SupportedDiagnostics.Any(s => fixableIds.Contains(s.Id)))
@@ -147,24 +217,6 @@ namespace AutoCodeFix
 
                 watch.Stop();
                 LogMessage($"Loaded applicable analyzers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
-
-                Token.ThrowIfCancellationRequested();
-
-                watch.Restart();
-
-                // We filter all available codefix providers to only those that support the project language and can 
-                // fix any of the generator diagnostic codes we received. 
-                var allProviders = MefHostServices.Create(analyzerAssemblies)
-                    .GetExports<CodeFixProvider, IDictionary<string, object>>()
-                    .Where(x => ((string[])x.Metadata["Languages"]).Contains(project.Language))
-                    .SelectMany(x => x.Value.FixableDiagnosticIds.Select(id => new { Id = id, Provider = x.Value }))
-                    .Where(x => fixableIds.Contains(x.Id))
-                    .GroupBy(x => x.Id)
-                    //.Select(x => new { Id = x.Key, Provider = x.Select(p => p.Provider).First() })
-                    .ToDictionary(x => x.Key, x => x.Select(y => y.Provider).ToArray());
-
-                watch.Stop();
-                LogMessage($"Loaded applicable code fix providers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -441,7 +493,7 @@ namespace AutoCodeFix
         IEnumerable<Assembly> LoadAnalyzers(bool warn = true)
         {
             var analyzers = new List<Assembly>(Analyzers.Length);
-            foreach (var item in Analyzers)
+            foreach (var item in Analyzers.Where(x => !SkipAnalyzers.Any(s => x.ItemSpec == x.ItemSpec)))
             {
                 try
                 {

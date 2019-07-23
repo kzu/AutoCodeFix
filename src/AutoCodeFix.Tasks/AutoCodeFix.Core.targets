@@ -56,6 +56,11 @@
           Condition="'$(DesignTimeBuild)' != 'true' and 
                     ('$(AutoCodeFixBeforeCompile)' == 'true' or Exists('$(_AutoCodeFixBeforeCompileFlag)'))">
 
+    <ReadLinesFromFile File="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt"
+                       Condition="Exists('$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt')">
+      <Output TaskParameter="Lines" ItemName="_SkipCodeFixAnalyzerBeforeCompile"/>
+    </ReadLinesFromFile>
+
     <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
     <ResolveLocalAssemblies Condition="'@(AutoCodeFix)' != ''" />
 
@@ -77,6 +82,7 @@
                     Language="$(Language)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
+                    SkipAnalyzers="@(_SkipCodeFixAnalyzerBeforeCompile)"
                     AdditionalFiles="@(AdditionalFiles)"
                     AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
@@ -85,7 +91,14 @@
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
                     Verbosity="$(AutoCodeFixVerbosity)"
-                    Condition="'@(AutoCodeFix)' != ''" />
+                    Condition="'@(AutoCodeFix)' != ''">
+      <Output TaskParameter="FailedAnalyzers" ItemName="SkipCodeFixAnalyzerBeforeCompile" />
+    </ApplyCodeFixes>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt" Lines="@(SkipCodeFixAnalyzerBeforeCompile)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt" />
+    </ItemGroup>
 
     <Delete Files="$(_AutoCodeFixBeforeCompileFlag)" Condition="'@(AutoCodeFix)' != ''" />
 
@@ -143,6 +156,11 @@
          and the entire target won't run. />
     -->
 
+    <ReadLinesFromFile File="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt"
+                       Condition="Exists('$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt')">
+      <Output TaskParameter="Lines" ItemName="_SkipCodeFixAnalyzerAfterCompile"/>
+    </ReadLinesFromFile>
+
     <SetAutoCodeFixEnvironment DesignTimeBuild="$(DesignTimeBuild)" />
     <ResolveLocalAssemblies />
 
@@ -164,6 +182,7 @@
                     Language="$(Language)"
                     DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
+                    SkipAnalyzers="@(_SkipCodeFixAnalyzerAfterCompile)"
                     AdditionalFiles="@(AdditionalFiles)"
                     AutoCodeFixIds="@(AutoCodeFix)"
                     NoWarn="$(NoWarn)"
@@ -171,7 +190,14 @@
                     PreprocessorSymbols="$(PreprocessorSymbols)"
                     CodeAnalysisRuleSet="$(ResolvedCodeAnalysisRuleSet)"
                     BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
-                    Verbosity="$(AutoCodeFixVerbosity)" />
+                    Verbosity="$(AutoCodeFixVerbosity)">
+      <Output TaskParameter="FailedAnalyzers" ItemName="SkipCodeFixAnalyzerAfterCompile" />
+    </ApplyCodeFixes>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt" Lines="@(SkipCodeFixAnalyzerAfterCompile)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)AutoCodeFix.SkipAnalyzers.txt" />
+    </ItemGroup>
 
     <!-- Make sure we build as little as possible here, specifying not to build project 
          references again, skipping this target, and considering @(AutoCodeFix) warnings as 
