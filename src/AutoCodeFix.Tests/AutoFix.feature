@@ -2,6 +2,13 @@
   Applies code fixes during build
 
   Background: A common import of the package targets directly
+    Given Directory.Build.props = 
+"""
+<Project>
+    <Import Project="AutoCodeFix.props" />
+    <Import Project="$(AutoCodeFixPath)build\AutoCodeFix.props" />
+</Project>
+"""
     Given Directory.Build.targets = 
 """
 <Project>

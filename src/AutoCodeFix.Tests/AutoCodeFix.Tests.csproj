@@ -16,21 +16,36 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic.Features" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
+    <PackageReference Include="Microsoft.Build" VersionOverride="$(MSBuildVersion.Substring(0, 2)).*" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" VersionOverride="$(MSBuildVersion.Substring(0, 2)).*" ExcludeAssets="runtime" />
     <!--<PackageReference Include="StyleCop.Analyzers" Version="1.1.0-beta*" />-->
 
     <PackageReference Include="xunit" />
     <!-- xunit.runner.visualstudio is needed for VSTest built-in task in VSTS -->
     <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.console" />
+    <PackageReference Include="InjectModuleInitializer" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.csproj" IncludeAssets="all" />
+    <ProjectReference Include="..\..\external\Gherkinator\src\Gherkinator.Build\Gherkinator.Build.csproj" IncludeAssets="all" />
     <ProjectReference Include="..\..\external\Gherkinator\src\Gherkinator\Gherkinator.csproj" />
     <ProjectReference Include="..\AutoCodeFix.Package\AutoCodeFix.Package.msbuildproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="**/*.feature" Exclude="$(OutputPath)/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="bin\Release\**" />
+    <Content Remove="bin\Release\**" />
+    <EmbeddedResource Remove="bin\Release\**" />
+    <None Remove="bin\Release\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\external\Gherkinator\src\Gherkinator.Build\ModuleInitializer.cs" Link="ModuleInitializer.cs" />
   </ItemGroup>
 
   <Target Name="CopyAutoCodeFixLayout" AfterTargets="Build">
@@ -40,5 +55,5 @@
     <Copy SourceFiles="@(AutoCodeFixContent)" DestinationFiles="@(AutoCodeFixContent -> '$(OutputPath)AutoCodeFix\%(PackagePath)')" Condition="'%(AutoCodeFixContent.Kind)' != 'Metadata' and '%(AutoCodeFixContent.Kind)' != 'Dependency'" SkipUnchangedFiles="true" />
   </Target>
 
-  <Import Project="..\..\external\Gherkinator\src\Gherkinator.MSBuild\Gherkinator.MSBuild.targets" />
+  <Import Project="..\..\external\Gherkinator\src\Gherkinator.Build\Gherkinator.Build.targets" />
 </Project>

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Gherkinator;
-using Gherkinator.Sdk;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Xunit;
@@ -14,14 +13,15 @@ namespace AutoCodeFix
 {
     public static class GherkinatorExtensions
     {
-        public static ScenarioBuilder UseAutoCodeFix(this ScenarioBuilder builder)
-            => builder.BeforeGiven(state =>
+        public static BuildScenario UseAutoCodeFix(this BuildScenario scenario)
+        {
+            scenario.Sdk.BeforeGiven(state =>
             {
                 // We expand the properties, rather than setting them as global 
                 // properties by setting the Dictionary<string, string> state, 
                 // so that when files are preserved, we can open and build them 
                 // from msbuild or VS.
-                var dir = Path.Combine(state.GetTempDir(), "Directory.Build.props");
+                var dir = Path.Combine(state.GetTempDir(), "AutoCodeFix.props");
                 Directory.CreateDirectory(state.GetTempDir());
                 var props = new[]
                 {
@@ -47,15 +47,9 @@ namespace AutoCodeFix
     </PropertyGroup>
 </Project>");
             });
-                
-            // Alternatively, we could have set them as MSBuild properties
-            //=> state.GetOrSet<Dictionary<string, string>>()
-            //    .Append("CurrentDirectory", Directory.GetCurrentDirectory() + "\\")
-            //    .Append("AutoCodeFixPath", Directory.GetCurrentDirectory() + "\\AutoCodeFix\\")
-            //    .Append("AutoCodeFixVersion", ThisAssembly.Metadata.PackageVersion)
-            //    .Append("RestoreIgnoreFailedSources", "true")
-            //    .Append("RestoreSources", Environment.ExpandEnvironmentVariables(
-            //        @"%TEMP%\packages;%USERPROFILE%\.nuget\packages;C:\Program Files\dotnet\sdk\NuGetFallbackFolder;https://api.nuget.org/v3/index.json")));
+
+            return scenario;
+        }
 
         public static void AssertSuccess(this (BuildResult result, IEnumerable<BuildEventArgs>) build)
         {
@@ -63,22 +57,22 @@ namespace AutoCodeFix
             var target = CallContext.GetData("Build.Target", default(string));
 
             if (build.result.OverallResult != BuildResultCode.Success)
-                CallContext.GetData<ScenarioState>().MSBuild().OpenLog(project, target);
+                CallContext.GetData<BuildContext>().OpenLog(project, target);
 
             Assert.Equal(BuildResultCode.Success, build.result.OverallResult);
         }
 
-        public static void AssertSuccess(this StepContext context, string project = null, string target = null)
+        public static void AssertSuccess(this BuildContext context, string project = null, string target = null)
         {
             project = project ?? CallContext.GetData("Build.Project", default(string));
             target = target ?? CallContext.GetData("Build.Target", default(string));
 
-            var result = context.State.MSBuild().LastBuildResult;
+            var result = context.LastBuildResult;
             project = project ?? Path.GetFileName(result.ProjectStateAfterBuild.FullPath);
             target = target ?? result.ResultsByTarget.Keys.First();
 
             if (result.OverallResult != BuildResultCode.Success)
-                context.State.MSBuild().OpenLog(project, target);
+                context.OpenLog(project, target);
 
             Assert.Equal(BuildResultCode.Success, result.OverallResult);
         }
