@@ -100,12 +100,14 @@ namespace AutoCodeFix
             if (!(BuildEngine4.GetRegisteredTaskObject(key, lifetime) is ProjectReader reader))
             {
                 LogMessage($"Initializing project reader...", MessageImportance.Low.ForVerbosity(verbosity));
-                var properties = BuildEngine.GetGlobalProperties();
+                var properties = new Dictionary<string, string>(BuildEngine.GetGlobalProperties());
+                // In the out of process, we're never "building" inside VS, so remove the property.
+                properties.Remove("BuildingInsideVisualStudio");
+
                 LogMessage($@"Determined global properties to use: 
 {string.Join(Environment.NewLine, properties.Select(p => $"\t{p.Key}={p.Value}"))}", MessageImportance.Low.ForVerbosity(verbosity));
 
-                reader = new ProjectReader(MSBuildBinPath, ToolsPath, DebugProjectReader, BuildEngine.GetGlobalProperties());
-
+                reader = new ProjectReader(MSBuildBinPath, ToolsPath, DebugProjectReader, properties);
                 BuildEngine4.RegisterTaskObject(key, reader, lifetime, false);
             }
 

@@ -121,11 +121,14 @@ namespace AutoCodeFix
                 var settings = AdditionalFiles.Select(x => x.GetMetadata("FullPath")).FirstOrDefault(x => x.EndsWith("AutoCodeFix.ini"));
                 if (settings != null && !project.AdditionalDocuments.Any(d => d.FilePath != null && d.FilePath.Equals(settings)))
                 {
-                    workspace.TryApplyChanges(project
+                    Debug.Assert(workspace
+                        .TryApplyChanges(project
                         .AddAdditionalDocument(Path.GetFileName(settings), File.ReadAllText(settings), filePath: settings)
-                        .Project.Solution);
+                        .Project.Solution), 
+                        "Failed to apply changes to workspace");
 
                     project = workspace.CurrentSolution.GetProject(project.Id);
+                    Debug.Assert(project != null, "Failed to retrieve project from current workspace solution.");
                 }
 
                 watch.Stop();
@@ -285,6 +288,8 @@ namespace AutoCodeFix
                 while (diagnostic != null && providers?.Length != 0)
                 {
                     var document = project.GetDocument(diagnostic.Location.SourceTree);
+                    Debug.Assert(document != null, "Failed to locate document from diagnostic.");
+
                     CodeAction codeAction = null;
                     
                     var fixApplied = false;
@@ -364,7 +369,9 @@ namespace AutoCodeFix
                                     // https://github.com/dotnet/roslyn-sdk/issues/140, Sam Harwell mentioned that we should 
                                     // be forcing a re-parse of the document syntax tree at this point. 
                                     var newDoc = await workspace.CurrentSolution.GetDocument(document.Id).RecreateDocumentAsync(Token);
-                                    workspace.TryApplyChanges(newDoc.Project.Solution);
+
+                                    // TODO: what happens if we can't apply?
+                                    Debug.Assert(workspace.TryApplyChanges(newDoc.Project.Solution), "Failed to apply changes to workspace.");
 
                                     fixApplied = true;
                                     appliedFixes[diagnostic.Id] = appliedFixes.GetOrAdd(diagnostic.Id, 0) + 1;
@@ -493,7 +500,7 @@ namespace AutoCodeFix
         IEnumerable<Assembly> LoadAnalyzers(bool warn = true)
         {
             var analyzers = new List<Assembly>(Analyzers.Length);
-            foreach (var item in Analyzers.Where(x => !SkipAnalyzers.Any(s => x.ItemSpec == x.ItemSpec)))
+            foreach (var item in Analyzers.Where(x => !SkipAnalyzers.Any(s => s.ItemSpec == x.ItemSpec)))
             {
                 try
                 {
