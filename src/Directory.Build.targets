@@ -1,7 +1,7 @@
 <Project>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Condition="$(CI)" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Condition="$(CI) Or '$(Configuration)' == 'Release'" />
     <PackageReference Include="GitInfo" PrivateAssets="all" />
     <PackageReference Include="MSBuilder.GenerateAssemblyInfo" PrivateAssets="all" />
     <PackageReference Include="MSBuilder.ThisAssembly.Metadata" PrivateAssets="all" />

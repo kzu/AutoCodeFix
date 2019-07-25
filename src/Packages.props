@@ -3,7 +3,7 @@
   <PropertyGroup Label="NuGet">
     <MicrosoftBuildVersion Condition="'$(MicrosoftBuildVersion)' == ''">15.9.20</MicrosoftBuildVersion>
     <RoslynVersion Condition="'$(RoslynVersion)' == ''">2.10.0</RoslynVersion>
-    <XunitVersion Condition="'$(XunitVersion)' == ''">2.4.0</XunitVersion>
+    <XunitVersion Condition="'$(XunitVersion)' == ''">2.4.1</XunitVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +33,7 @@
     <PackageReference Update="xunit.runner.visualstudio" Version="$(XunitVersion)" />
     <PackageReference Update="xunit.runner.console" Version="$(XunitVersion)" />
     <PackageReference Update="xunit.runner.msbuild" Version="$(XunitVersion)" />
+    <PackageReference Update="InjectModuleInitializer" Version="2.0.3" />
   </ItemGroup>
 
 </Project>

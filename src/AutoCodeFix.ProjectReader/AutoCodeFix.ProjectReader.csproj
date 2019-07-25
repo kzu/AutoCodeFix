@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <AssemblyName>ProjectReader</AssemblyName>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <RootNamespace>AutoCodeFix</RootNamespace>
     <OutputType>Exe</OutputType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
