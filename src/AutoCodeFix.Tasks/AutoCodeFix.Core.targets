@@ -114,6 +114,10 @@
   <!-- In order to detect fixable diagnostics, we set up a logger that records diagnostics emitted by 
        the CoreCompile (csc/vbc) run. This target sets up the logger and keeps track of invocations. -->
   <Target Name="_RecordAutoCodeFixWarnings" BeforeTargets="CoreCompile" Condition="'$(_AutoCodeFixesApplied)' != 'true'">
+    <PropertyGroup>
+      <_OriginalWarningsNotAsErrors>$(WarningsNotAsErrors)</_OriginalWarningsNotAsErrors>
+      <WarningsNotAsErrors>$(WarningsNotAsErrors);@(AutoCodeFix)</WarningsNotAsErrors>
+    </PropertyGroup>
     <RecordAutoCodeFixWarnings AutoCodeFixIds="@(AutoCodeFix)" ProjectFile="$(MSBuildProjectFullPath)" Condition="'@(AutoCodeFix)' != ''" />
   </Target>
 
@@ -126,6 +130,9 @@
     <CollectAutoCodeFixWarnings ProjectFile="$(MSBuildProjectFullPath)">
       <Output TaskParameter="AutoCodeFixWarnings" ItemName="AutoCodeFixWarning" />
     </CollectAutoCodeFixWarnings>
+    <PropertyGroup>
+      <WarningsNotAsErrors>$(_OriginalWarningsNotAsErrors)</WarningsNotAsErrors>
+    </PropertyGroup>
   </Target>
 
   <!-- Ties together the Collect and Apply targets. -->
