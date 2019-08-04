@@ -1,4 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <PropertyGroup>
+    <!-- Optionally override via csproj or directory.build.targets to use a locally built version -->
+    <AutoCodeFixTasks>AutoCodeFix.Tasks.dll</AutoCodeFixTasks>
+  </PropertyGroup>
+
   <!-- Extensibility point for consumers that want to get notified after code fixes were applied. 
        Can be redeclared by a project -->
   <Target Name="AfterAutoCodeFix" />

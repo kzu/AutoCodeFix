@@ -1,10 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="RecordAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="CollectAutoCodeFixWarnings" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="AutoCodeFix.Tasks.dll" />
-  <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="AutoCodeFix.Tasks.dll" />
+  <UsingTask TaskName="ResolveLocalAssemblies" AssemblyFile="$(AutoCodeFixTasks)" />
+  <UsingTask TaskName="RecordAutoCodeFixWarnings" AssemblyFile="$(AutoCodeFixTasks)" />
+  <UsingTask TaskName="CollectAutoCodeFixWarnings" AssemblyFile="$(AutoCodeFixTasks)" />
+  <UsingTask TaskName="ApplyCodeFixes" AssemblyFile="$(AutoCodeFixTasks)" />
+  <UsingTask TaskName="SetAutoCodeFixEnvironment" AssemblyFile="$(AutoCodeFixTasks)" />
 
   <PropertyGroup>
     <!-- AutoCodeFix, by default, will not run at all unless Compile emits warnings that have 
