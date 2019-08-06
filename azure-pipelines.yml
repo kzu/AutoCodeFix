@@ -107,7 +107,7 @@ stages:
 
           - task: DownloadPipelineArtifact@2
             inputs:
-              artifactName: package
+              artifactName: packages
 
-          - script: 'sleet push --config none $(Pipeline.Workspace)/package -f --verbose -p "SLEET_FEED_CONNECTIONSTRING=$(SLEET_FEED_CONNECTIONSTRING)"'
+          - script: 'sleet push --config none $(Pipeline.Workspace)/packages -f --verbose -p "SLEET_FEED_CONNECTIONSTRING=$(SLEET_FEED_CONNECTIONSTRING)"'
             displayName: 'Push package via Sleet'
