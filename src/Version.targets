@@ -3,7 +3,7 @@
   <PropertyGroup>
     <GitThisAssemblyMetadata>false</GitThisAssemblyMetadata>
     <GitSkipCache>true</GitSkipCache>
-    <GitBaseVersion Condition="'$(GitBaseVersion)' == ''">$(RoslynVersion)</GitBaseVersion>
+    <GitBaseVersion Condition="'$(GitBaseVersion)' == ''">$(RoslynVersion)-alpha</GitBaseVersion>
     <GitBaseVersionSource>Project</GitBaseVersionSource>
     <GitCommitsRelativeTo>$(MSBuildThisFileDirectory)</GitCommitsRelativeTo>
   </PropertyGroup>
@@ -35,7 +35,7 @@
 
       <VersionPrefix>$(GitBaseVersion)</VersionPrefix>
       <VersionSuffix Condition="'$(RELEASE_RELEASEID)' == ''">-ci.$(GitCommits)$(VersionMetadata)</VersionSuffix>
-      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' != ''">$(VersionMetadata)</VersionSuffix>
+      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' != ''">$(GitSemVerDashLabel)$(VersionMetadata)</VersionSuffix>
 
       <PackageVersion>$(VersionPrefix)$(VersionSuffix)</PackageVersion>
       <Version>$(VersionPrefix)</Version>
