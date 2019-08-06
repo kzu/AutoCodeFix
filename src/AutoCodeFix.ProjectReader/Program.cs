@@ -258,7 +258,10 @@ namespace AutoCodeFix
                 CompilationOptions = new
                 {
                     project.CompilationOptions.OutputKind,
-                    project.CompilationOptions.Platform
+                    project.CompilationOptions.Platform,
+                    project.CompilationOptions.CryptoKeyFile,
+                    project.CompilationOptions.DelaySign,
+                    project.CompilationOptions.PublicSign,
                 },
                 ProjectReferences = project.ProjectReferences
                     .Where(x => workspace.CurrentSolution.ProjectIds.Contains(x.ProjectId))

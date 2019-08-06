@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Build.Framework;
 using StreamJsonRpc;
 
 namespace AutoCodeFix

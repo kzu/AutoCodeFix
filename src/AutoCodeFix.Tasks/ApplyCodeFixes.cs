@@ -75,7 +75,7 @@ namespace AutoCodeFix
 
         public override bool Execute()
         {
-            if (DebugAutoCodeFix)
+            if (DebugAutoCodeFix && !Debugger.IsAttached)
                 Debugger.Launch();
 
             if (AutoCodeFixIds?.Length == 0)

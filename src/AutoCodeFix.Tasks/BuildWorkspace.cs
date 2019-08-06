@@ -155,6 +155,19 @@ namespace AutoCodeFix
                 referencesToAdd.Add(new ProjectReference(referencedProject.Id));
             }
 
+            var compilationOptions = language == LanguageNames.CSharp
+                ? (CompilationOptions)new CSharpCompilationOptions(output, platform: platform)
+                : (CompilationOptions)new VisualBasicCompilationOptions(output, platform: platform);
+
+            compilationOptions = compilationOptions
+                .WithDelaySign((bool?)projectMetadata.CompilationOptions.DelaySign)
+                .WithPublicSign((bool)projectMetadata.CompilationOptions.PublicSign);
+
+            if (!string.IsNullOrEmpty((string)projectMetadata.CompilationOptions.CryptoKeyFile))
+                compilationOptions = compilationOptions.WithCryptoKeyFile((string)projectMetadata.CompilationOptions.CryptoKeyFile);
+
+            compilationOptions = compilationOptions.WithStrongNameProvider(new DesktopStrongNameProvider());
+
             OnProjectAdded(
                 ProjectInfo.Create(
                     ProjectId.CreateFromSerialized(new Guid((string)projectMetadata.Id)),
@@ -168,9 +181,7 @@ namespace AutoCodeFix
                         .Cast<object>()
                         .Select(x => MetadataReference.CreateFromFile(x.ToString())),
                     // Switch compilation options depending on language.
-                    compilationOptions: language == LanguageNames.CSharp 
-                        ? (CompilationOptions)new CSharpCompilationOptions(output, platform: platform)
-                        : (CompilationOptions)new VisualBasicCompilationOptions(output, platform: platform), 
+                    compilationOptions: compilationOptions, 
                     parseOptions: (language == LanguageNames.CSharp
                         ? (ParseOptions)new CSharpParseOptions(documentationMode: DocumentationMode.None, preprocessorSymbols: preprocessorSymbols.ToArray())
                         : (ParseOptions)new VisualBasicParseOptions(documentationMode: DocumentationMode.None,
