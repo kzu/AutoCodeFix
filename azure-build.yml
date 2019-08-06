@@ -22,7 +22,7 @@ steps:
 
 - task: VSTest@2
   displayName: Test ${{ parameters.roslyn }}
-  timeoutInMinutes: 10
+  timeoutInMinutes: 5
   inputs:
     testAssemblyVer2: src/AutoCodeFix.Tests/bin/*/AutoCodeFix.Tests.dll
     runInParallel: true
