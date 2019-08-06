@@ -3,7 +3,6 @@
 
 parameters:
   roslyn: ''
-  package: ''
 
 steps:
 - task: MSBuild@1
@@ -18,7 +17,7 @@ steps:
   inputs:
     solution: AutoCodeFix.sln
     configuration: $(Configuration)
-    msbuildArguments: -p:GeneratePackageOnBuild=true -p:RoslynVersion=${{ parameters.roslyn }} -p:GitBaseVersion=${{ parameters.package }} -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/pkgs -bl:"$(Build.ArtifactStagingDirectory)/logs/build.${{ parameters.roslyn }}.binlog" 
+    msbuildArguments: -p:GeneratePackageOnBuild=true -p:RoslynVersion=${{ parameters.roslyn }} -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/pkgs -bl:"$(Build.ArtifactStagingDirectory)/logs/build.${{ parameters.roslyn }}.binlog" 
 
 - task: VSTest@2
   displayName: Test ${{ parameters.roslyn }}

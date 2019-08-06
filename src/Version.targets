@@ -3,9 +3,6 @@
   <PropertyGroup>
     <GitThisAssemblyMetadata>false</GitThisAssemblyMetadata>
     <GitSkipCache>true</GitSkipCache>
-    <GitBaseVersion Condition="'$(GitBaseVersion)' == ''">$(RoslynVersion)-alpha</GitBaseVersion>
-    <GitBaseVersionSource>Project</GitBaseVersionSource>
-    <GitCommitsRelativeTo>$(MSBuildThisFileDirectory)</GitCommitsRelativeTo>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -19,7 +16,7 @@
   </PropertyGroup>
 
   <Target Name="SetVersions"
-          BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetAssemblyAttributes;GetPackageVersion;Pack"
+          BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetAssemblyAttributes;GetPackageVersion;Pack;"
           DependsOnTargets="GitVersion"
           Returns="$(Version)"
           Condition="'$(GitInfoImported)' == 'true' And '$(ExcludeRestorePackageImports)' != 'true'">
@@ -32,11 +29,21 @@
 
     <PropertyGroup>
       <VersionMetadata>+@(VersionMetadata -> '%(Identity)', '-')</VersionMetadata>
+    </PropertyGroup>
 
+    <PropertyGroup Label="Stable" Condition="'$(GitSemVerLabel)' == ''">
+      <!-- If we're building a stable version, increment patch with commits as provided by the SemVer properties -->
+      <VersionPrefix>$(GitSemVerPatch).$(GitSemVerPatch).$(GitSemVerPatch)</VersionPrefix>
+      <VersionSuffix>$(VersionMetadata)</VersionSuffix>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Prerelease" Condition="'$(GitSemVerDashLabel)' != ''">
+      <!-- Otherwise, we'll use the base version number and add the commits to the pre-release label -->
       <VersionPrefix>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)</VersionPrefix>
-      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' == ''">$(GitSemVerDashLabel)-ci.$(GitCommits)$(VersionMetadata)</VersionSuffix>
-      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' != ''">$(GitSemVerDashLabel)$(VersionMetadata)</VersionSuffix>
+      <VersionSuffix>$(GitSemVerDashLabel).$(GitCommits)$(VersionMetadata)</VersionSuffix>
+    </PropertyGroup>
 
+    <PropertyGroup>
       <PackageVersion>$(VersionPrefix)$(VersionSuffix)</PackageVersion>
       <Version>$(VersionPrefix)</Version>
       <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
@@ -56,6 +63,15 @@
     </ItemGroup>
 
     <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(GitBranch)$(VersionMetadata)"/>
+  </Target>
+
+  <Target Name="_ReplaceBaseVersionWithRoslynVersion" BeforeTargets="_GitPopulateVersionInfo">
+    <PropertyGroup>
+      <GitBaseVersion Condition="'$(ReleaseLabel)' == '' and $(CI)">$(RoslynVersion)</GitBaseVersion>
+      <!-- Clearly mark local builds -->
+      <GitBaseVersion Condition="'$(ReleaseLabel)' == '' and !$(CI)">$(RoslynVersion)-local</GitBaseVersion>
+      <GitBaseVersion Condition="'$(ReleaseLabel)' != ''">$(RoslynVersion)-$(ReleaseLabel)</GitBaseVersion>
+    </PropertyGroup>
   </Target>
   
 </Project>

@@ -18,6 +18,8 @@ variables:
 - group: Sleet
 - name: Configuration
   value: Release
+- name: ReleaseLabel
+  value: beta
 
 stages:
 
