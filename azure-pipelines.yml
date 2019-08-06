@@ -21,7 +21,8 @@ variables:
 
 stages:
 
-- stage: Build
+- stage: Build2017
+  dependsOn: []
   jobs:
   - job: Build
     pool:
@@ -34,35 +35,54 @@ stages:
       parameters:
         roslyn: '2.10.0'
 
+- stage: Build2019_3_0
+  dependsOn: []
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'windows-2019'
+    steps:
+    - checkout: self
+      clean: true
+
     - template: azure-build.yml
       parameters:
         roslyn: '3.0.0'
+
+- stage: Build2019_3_1
+  dependsOn: []
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'windows-2019'
+    steps:
+    - checkout: self
+      clean: true
 
     - template: azure-build.yml
       parameters:
         roslyn: '3.1.0'
 
+- stage: Build2019_3_2
+  dependsOn: []
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'windows-2019'
+    steps:
+    - checkout: self
+      clean: true
+
     - template: azure-build.yml
       parameters:
         roslyn: '3.2.0'
 
-    - task: PublishBuildArtifacts@1
-      displayName: Upload Packages
-      condition: succeeded()
-      inputs:
-        PathtoPublish: $(Build.ArtifactStagingDirectory)/pkgs
-        ArtifactName: packages
-        ArtifactType: Container
-
-    - task: PublishBuildArtifacts@1
-      displayName: Upload Logs
-      condition: always()
-      inputs:
-        PathtoPublish: $(Build.ArtifactStagingDirectory)/logs
-        ArtifactName: logs
-        ArtifactType: Container
-
 - stage: Deploy
+  dependsOn:
+  - Build2017
+  - Build2019_3_0
+  - Build2019_3_1
+  - Build2019_3_2
   variables:
   - name: SleetVersion
     value: 2.3.33

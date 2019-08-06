@@ -30,3 +30,19 @@ steps:
     publishRunAttachments: true
     diagnosticsEnabled: false
     rerunFailedTests: true
+
+- task: PublishBuildArtifacts@1
+    displayName: Upload Packages
+    condition: succeeded()
+    inputs:
+    PathtoPublish: $(Build.ArtifactStagingDirectory)/pkgs
+    ArtifactName: packages
+    ArtifactType: Container
+
+- task: PublishBuildArtifacts@1
+    displayName: Upload Logs
+    condition: always()
+    inputs:
+    PathtoPublish: $(Build.ArtifactStagingDirectory)/logs
+    ArtifactName: logs
+    ArtifactType: Container
