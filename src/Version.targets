@@ -70,7 +70,7 @@
     <PropertyGroup>
       <GitBaseVersion Condition="'$(ReleaseLabel)' == '' and $(CI)">$(RoslynVersion)</GitBaseVersion>
       <!-- Clearly mark local builds -->
-      <GitBaseVersion Condition="'$(ReleaseLabel)' == '' and !$(CI)">$(RoslynVersion)-local</GitBaseVersion>
+      <GitBaseVersion Condition="'$(ReleaseLabel)' == '' and !$(CI)">$(RoslynVersion)-dev</GitBaseVersion>
       <GitBaseVersion Condition="'$(ReleaseLabel)' != ''">$(RoslynVersion)-$(ReleaseLabel)</GitBaseVersion>
     </PropertyGroup>
   </Target>
