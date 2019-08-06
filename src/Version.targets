@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <Target Name="SetVersions"
-          BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetPackageVersion;Pack"
+          BeforeTargets="PrepareForBuild;GetAssemblyVersion;GetAssemblyAttributes;GetPackageVersion;Pack"
           DependsOnTargets="GitVersion"
           Returns="$(Version)"
           Condition="'$(GitInfoImported)' == 'true' And '$(ExcludeRestorePackageImports)' != 'true'">
@@ -33,8 +33,8 @@
     <PropertyGroup>
       <VersionMetadata>+@(VersionMetadata -> '%(Identity)', '-')</VersionMetadata>
 
-      <VersionPrefix>$(GitBaseVersion)</VersionPrefix>
-      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' == ''">-ci.$(GitCommits)$(VersionMetadata)</VersionSuffix>
+      <VersionPrefix>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)</VersionPrefix>
+      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' == ''">$(GitSemVerDashLabel)-ci.$(GitCommits)$(VersionMetadata)</VersionSuffix>
       <VersionSuffix Condition="'$(RELEASE_RELEASEID)' != ''">$(GitSemVerDashLabel)$(VersionMetadata)</VersionSuffix>
 
       <PackageVersion>$(VersionPrefix)$(VersionSuffix)</PackageVersion>

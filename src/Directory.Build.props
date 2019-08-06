@@ -28,4 +28,8 @@
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\out</PackageOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RoslynVersion Condition="'$(RoslynVersion)' == ''">3.2.0</RoslynVersion>
+  </PropertyGroup>
+
 </Project>
