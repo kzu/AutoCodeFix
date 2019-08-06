@@ -1,0 +1,32 @@
+# Builds and tests AutoCodeFix for the specified 
+# versions of Roslyn
+
+parameters:
+  roslyn: ''
+  package: ''
+
+steps:
+- task: MSBuild@1
+  displayName: Restore ${{ parameters.roslyn }}
+  inputs:
+    solution: AutoCodeFix.sln
+    configuration: $(Configuration)
+    msbuildArguments: -t:restore -p:RoslynVersion=${{ parameters.roslyn }}
+
+- task: MSBuild@1
+  displayName: Build ${{ parameters.roslyn }}
+  inputs:
+    solution: AutoCodeFix.sln
+    configuration: $(Configuration)
+    msbuildArguments: -p:GeneratePackageOnBuild=true -p:RoslynVersion=${{ parameters.roslyn }} -p:GitBaseVersion=${{ parameters.package }} -p:PackageOutputPath=$(Build.ArtifactStagingDirectory)/pkgs -bl:"$(Build.ArtifactStagingDirectory)/logs/build.${{ parameters.roslyn }}.binlog" 
+
+- task: VSTest@2
+  displayName: Test ${{ parameters.roslyn }}
+  timeoutInMinutes: 10
+  inputs:
+    testAssemblyVer2: src/AutoCodeFix.Tests/bin/*/AutoCodeFix.Tests.dll
+    runInParallel: true
+    codeCoverageEnabled: true
+    publishRunAttachments: true
+    diagnosticsEnabled: false
+    rerunFailedTests: true

@@ -30,37 +30,36 @@ stages:
     - checkout: self
       clean: true
 
-    - task: MSBuild@1
-      displayName: Restore
-      inputs:
-        solution: AutoCodeFix.sln
-        configuration: $(Configuration)
-        msbuildArguments: -t:restore
+    - template: azure-build.yml
+      parameters:
+        roslyn: '2.10.0'
 
-    - task: MSBuild@1
-      displayName: Build
-      inputs:
-        solution: AutoCodeFix.sln
-        configuration: $(Configuration)
-        msbuildArguments: -p:GeneratePackageOnBuild=true -p:PackageOutputPath=$(Build.ArtifactStagingDirectory) -bl:"$(Build.ArtifactStagingDirectory)/build.binlog" 
+    - template: azure-build.yml
+      parameters:
+        roslyn: '3.0.0'
 
-    - task: VSTest@2
-      displayName: Test
-      timeoutInMinutes: 10
-      inputs:
-        testAssemblyVer2: src/AutoCodeFix.Tests/bin/*/AutoCodeFix.Tests.dll
-        runInParallel: true
-        codeCoverageEnabled: true
-        publishRunAttachments: true
-        diagnosticsEnabled: false
-        rerunFailedTests: true
+    - template: azure-build.yml
+      parameters:
+        roslyn: '3.1.0'
+
+    - template: azure-build.yml
+      parameters:
+        roslyn: '3.2.0'
 
     - task: PublishBuildArtifacts@1
-      displayName: Upload
+      displayName: Upload Packages
       condition: succeeded()
       inputs:
-        PathtoPublish: $(Build.ArtifactStagingDirectory)
-        ArtifactName: package
+        PathtoPublish: $(Build.ArtifactStagingDirectory)/pkgs
+        ArtifactName: packages
+        ArtifactType: Container
+
+    - task: PublishBuildArtifacts@1
+      displayName: Upload Logs
+      condition: always()
+      inputs:
+        PathtoPublish: $(Build.ArtifactStagingDirectory)/logs
+        ArtifactName: logs
         ArtifactType: Container
 
 - stage: Deploy

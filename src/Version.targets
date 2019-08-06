@@ -1,9 +1,11 @@
-<Project>
+<Project TreatAsLocalProperty="GitBaseVersion">
 
   <PropertyGroup>
     <GitThisAssemblyMetadata>false</GitThisAssemblyMetadata>
-    <GitVersionFile>$(MSBuildThisFileDirectory)VERSION</GitVersionFile>
     <GitSkipCache>true</GitSkipCache>
+    <GitBaseVersion Condition="'$(GitBaseVersion)' == ''">$(RoslynVersion)</GitBaseVersion>
+    <GitBaseVersionSource>Project</GitBaseVersionSource>
+    <GitCommitsRelativeTo>$(MSBuildThisFileDirectory)</GitCommitsRelativeTo>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -14,7 +16,6 @@
   <PropertyGroup>
     <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' != ''">$(SYSTEM_PULLREQUEST_TARGETBRANCH)</GitBranch>
     <GitBranch Condition="'$(SYSTEM_PULLREQUEST_TARGETBRANCH)' == '' and '$(BUILD_SOURCEBRANCHNAME)' != ''">$(BUILD_SOURCEBRANCHNAME)</GitBranch>
-    <GitBranch Condition="'$(APPVEYOR_REPO_BRANCH)' != ''">$(APPVEYOR_REPO_BRANCH)</GitBranch>
   </PropertyGroup>
 
   <Target Name="SetVersions"
@@ -22,26 +23,25 @@
           DependsOnTargets="GitVersion"
           Returns="$(Version)"
           Condition="'$(GitInfoImported)' == 'true' And '$(ExcludeRestorePackageImports)' != 'true'">
-    
+
     <ItemGroup>
-      <VersionMetadata Include="$(GitCommits)" Condition="'$(GitSemVerDashLabel)' == ''" />
-
-      <VersionMetadata Condition="$(CI) and '$(BUILD_REASON)' == 'PullRequest'"
-                       Include="pr.$(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)"/>
-
-      <VersionMetadata Include="sha.$(GitCommit)"/>
-
-      <VersionMetadata Condition="$(CI)" 
-                       Include="azdo.$(BUILD_BUILDID)"/>
+      <VersionMetadata Include="pr.$(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)" Condition="$(CI) and '$(SYSTEM_PULLREQUEST_PULLREQUESTNUMBER)' != ''" />
+      <VersionMetadata Include="sha.$(GitCommit)" />
+      <VersionMetadata Include="azdo.$(BUILD_BUILDID)" Condition="$(CI)" />
     </ItemGroup>
 
     <PropertyGroup>
-      <VersionMetadataLabel>@(VersionMetadata -> '%(Identity)', '-')</VersionMetadataLabel>
-      <VersionMetadataPlusLabel Condition="'$(VersionMetadataLabel)' != ''">+$(VersionMetadataLabel)</VersionMetadataPlusLabel>
+      <VersionMetadata>+@(VersionMetadata -> '%(Identity)', '-')</VersionMetadata>
 
-      <GitSemVerDashLabel Condition="'$(GitSemVerDashLabel)' != '' and '$(GitCommits)' != '0'">$(GitSemVerDashLabel).$(GitCommits)</GitSemVerDashLabel>
-      <PackageVersion>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)$(GitSemVerDashLabel)$(VersionMetadataPlusLabel)</PackageVersion>
-      <Version>$(PackageVersion)</Version>
+      <VersionPrefix>$(GitBaseVersion)</VersionPrefix>
+      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' == ''">-ci.$(GitCommits)$(VersionMetadata)</VersionSuffix>
+      <VersionSuffix Condition="'$(RELEASE_RELEASEID)' != ''">$(VersionMetadata)</VersionSuffix>
+
+      <PackageVersion>$(VersionPrefix)$(VersionSuffix)</PackageVersion>
+      <Version>$(VersionPrefix)</Version>
+      <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+      <FileVersion>$(VersionPrefix).$(GitCommits)</FileVersion>
+      <InformationalVersion>$(Version)</InformationalVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -55,7 +55,7 @@
       </AssemblyAttribute>
     </ItemGroup>
 
-    <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(Version)"/>
+    <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(GitBranch).$(GitCommits)$(VersionMetadata)"/>
   </Target>
   
 </Project>
