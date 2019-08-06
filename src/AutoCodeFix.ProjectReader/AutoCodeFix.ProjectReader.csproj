@@ -3,7 +3,6 @@
 
   <PropertyGroup>
     <AssemblyName>ProjectReader</AssemblyName>
-    <TargetFramework>net472</TargetFramework>
     <RootNamespace>AutoCodeFix</RootNamespace>
     <OutputType>Exe</OutputType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -13,6 +12,9 @@
     <InferPackageContents>false</InferPackageContents>
     <CopyNuGetImplementations>true</CopyNuGetImplementations>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <TargetFramework>net472</TargetFramework>
+    <TargetFramework Condition="'$(RoslynVersion)' == '2.10.0'">net46</TargetFramework>
   </PropertyGroup>
 
   <ItemDefinitionGroup>
@@ -45,17 +47,14 @@
   <Target Name="_RemoveAssets" AfterTargets="ResolvePackageAssets">
     <ItemGroup>
       <ResourceCopyLocalItems Remove="@(ResourceCopyLocalItems)" />
-      <RuntimeCopyLocalItems Remove="@(RuntimeCopyLocalItems)"
-                             Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
-      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
-                             Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
+      <RuntimeCopyLocalItems Remove="@(RuntimeCopyLocalItems)" Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)" Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
     </ItemGroup>
   </Target>
 
   <Target Name="_RemoveCopyLocalAssets" BeforeTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
-      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)"
-                             Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="$([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('sqlite')) or $([MSBuild]::ValueOrDefault('%(Filename)', '').Contains('SQLite'))" />
     </ItemGroup>
   </Target>
 
