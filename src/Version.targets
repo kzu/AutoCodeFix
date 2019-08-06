@@ -40,7 +40,8 @@
     <PropertyGroup Label="Prerelease" Condition="'$(GitSemVerDashLabel)' != ''">
       <!-- Otherwise, we'll use the base version number and add the commits to the pre-release label -->
       <VersionPrefix>$(GitBaseVersionMajor).$(GitBaseVersionMinor).$(GitBaseVersionPatch)</VersionPrefix>
-      <VersionSuffix>$(GitSemVerDashLabel).$(GitCommits)$(VersionMetadata)</VersionSuffix>
+      <VersionSuffix Condition="'$(GitCommits)' == '0'">$(GitSemVerDashLabel)$(VersionMetadata)</VersionSuffix>
+      <VersionSuffix Condition="'$(GitCommits)' != '0'">$(GitSemVerDashLabel).$(GitCommits)$(VersionMetadata)</VersionSuffix>
     </PropertyGroup>
 
     <PropertyGroup>
