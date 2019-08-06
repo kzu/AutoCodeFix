@@ -55,7 +55,7 @@
       </AssemblyAttribute>
     </ItemGroup>
 
-    <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(GitBranch).$(GitCommits)$(VersionMetadata)"/>
+    <Message Condition="$(CI)" Importance="high" Text="##vso[build.updatebuildnumber]$(GitBranch)$(VersionMetadata)"/>
   </Target>
   
 </Project>
