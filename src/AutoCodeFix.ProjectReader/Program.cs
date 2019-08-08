@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,6 +18,7 @@ namespace AutoCodeFix
 {
     internal class Program
     {
+        private static readonly TraceSource tracer = new TraceSource(nameof(AutoCodeFix));
         private static ManualResetEventSlim exit = new ManualResetEventSlim();
         private static bool ready;
         private static Task initializer = Task.CompletedTask;
@@ -218,8 +220,17 @@ namespace AutoCodeFix
         {
             await initializer;
             workspace?.Dispose();
-            workspace = MSBuildWorkspace.Create(properties);
-            workspace.SkipUnrecognizedProjects = true;
+            try
+            {
+                workspace = MSBuildWorkspace.Create(properties);
+                workspace.WorkspaceFailed += (sender, args) => tracer.TraceEvent(TraceEventType.Error, 0, $"{args.Diagnostic.Kind}: {args.Diagnostic.Message}");
+                workspace.SkipUnrecognizedProjects = true;
+            }
+            catch (Exception e)
+            {
+                tracer.TraceEvent(TraceEventType.Error, 0, e.ToString());
+                throw;
+            }
         }
 
         public async Task CloseWorkspaceAsync()
@@ -228,7 +239,7 @@ namespace AutoCodeFix
             workspace?.Dispose();
         }
 
-        public async Task<object> OpenProjectAsync(string projectFile)
+        public async Task<object> OpenProjectAsync(string projectFile, CancellationToken cancellation = default)
         {
             if (workspace == null)
             {
@@ -239,10 +250,21 @@ namespace AutoCodeFix
             var project = workspace.CurrentSolution.Projects.FirstOrDefault(p => p.FilePath == projectFullPath);
             if (project == null)
             {
-                project = await workspace.OpenProjectAsync(projectFullPath);
+                tracer.TraceInformation($"Project {Path.GetFileName(projectFile)} not found, opening...");
+                project = await workspace.OpenProjectAsync(projectFullPath, new LoadProgress(), cancellation);
+            }
+            else
+            {
+                tracer.TraceInformation($"Existing project found in current workspace solution for {Path.GetFileName(projectFile)}");
             }
 
             return ProjectToMetadata(project);
+        }
+
+        class LoadProgress : IProgress<ProjectLoadProgress>
+        {
+            public void Report(ProjectLoadProgress value) 
+                => tracer.TraceEvent(TraceEventType.Verbose, 0, $"{Path.GetFileName(value.FilePath)} ({value.Operation}): {value.ElapsedTime}");
         }
 
         private object ProjectToMetadata(Project project)
