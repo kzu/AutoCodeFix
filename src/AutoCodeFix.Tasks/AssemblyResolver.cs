@@ -81,8 +81,10 @@ namespace AutoCodeFix
             return searchedAssemblies
                 // Be more strict and just allow same-major?
                 .Where(name =>
-                    (name.Version.Major >= assemblyName.Version.Major &&
-                     name.Version.Minor >= assemblyName.Version.Minor))
+                    // Either major version is greater
+                    name.Version.Major > assemblyName.Version.Major ||
+                    // Or it's equal but the minor version is also equal or greater
+                    (name.Version.Major == assemblyName.Version.Major && name.Version.Minor >= assemblyName.Version.Minor))
                 .Select(name =>
                 {
                     logMessage(MessageImportance.Low, $"Loading {name.Name} from {new Uri(name.CodeBase).LocalPath}");
