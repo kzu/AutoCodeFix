@@ -121,7 +121,7 @@ namespace AutoCodeFix
         {
             var watch = Stopwatch.StartNew();
 
-            var metadata = await reader.OpenProjectAsync(projectFullPath);
+            var metadata = await reader.OpenProjectAsync(projectFullPath, cancellation);
             log(MessageImportance.Low, $"Read '{Path.GetFileName(projectFullPath)}' metadata in {watch.Elapsed.TotalSeconds} seconds.");
 
             var project = await AddProjectFromMetadataAsync(metadata, preprocessorSymbols, log, cancellation);

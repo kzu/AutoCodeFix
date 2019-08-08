@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using StreamJsonRpc;
 
@@ -85,11 +86,11 @@ namespace AutoCodeFix
             return await rpc.InvokeAsync<bool>(nameof(Ping));
         }
 
-        public async Task<dynamic> OpenProjectAsync(string projectFullPath)
+        public async Task<dynamic> OpenProjectAsync(string projectFullPath, CancellationToken cancellation)
         {
             EnsureRunning();
             await initializer;
-            return await rpc.InvokeAsync<dynamic>(nameof(OpenProjectAsync), projectFullPath);
+            return await rpc.InvokeWithCancellationAsync<dynamic>(nameof(OpenProjectAsync), new[] { projectFullPath }, cancellation);
         }
 
         public async Task CloseWorkspaceAsync()
