@@ -172,7 +172,7 @@ namespace AutoCodeFix
                                 nameof(Resources.ACF002),
                                 null, null, 0, 0, 0, 0,
                                 Resources.ACF002,
-                                assembly.Location, "Skipping analyer for AutoCodeFix.");
+                                assembly.Location, "Skipping analyer for AutoCodeFix");
 
                             failedAssemblies.Add(assembly);
                             analyzerAssemblies.Remove(assembly);
@@ -187,7 +187,7 @@ namespace AutoCodeFix
                     .ToArray();
 
                 watch.Stop();
-                LogMessage($"Loaded applicable code fix providers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Loaded {allProviders.SelectMany(x => x.Value).Distinct().Count()} applicable code fix providers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
@@ -219,7 +219,7 @@ namespace AutoCodeFix
                     .ToImmutableArray();
 
                 watch.Stop();
-                LogMessage($"Loaded applicable analyzers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
+                LogMessage($"Loaded {analyzers.Length} applicable analyzers in {TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).Humanize()}", MessageImportance.Low.ForVerbosity(verbosity));
 
                 Token.ThrowIfCancellationRequested();
 
