@@ -61,11 +61,6 @@ namespace AutoCodeFix
         public bool BuildingInsideVisualStudio { get; set; }
 
         /// <summary>
-        /// Whether to debug debug the task for troubleshooting purposes.
-        /// </summary>
-        public bool DebugAutoCodeFix { get; set; }
-
-        /// <summary>
         /// Logging verbosity for reporting.
         /// </summary>
         public string Verbosity { get; set; } = LoggerVerbosity.Normal.ToString();
@@ -75,9 +70,6 @@ namespace AutoCodeFix
 
         public override bool Execute()
         {
-            if (DebugAutoCodeFix && !Debugger.IsAttached)
-                Debugger.Launch();
-
             if (AutoCodeFixIds?.Length == 0)
                 return true;
 

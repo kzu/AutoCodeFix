@@ -36,6 +36,7 @@
     <InitializeBuildEnvironment ToolsPath="$(AutoCodeFixToolsPath)" 
                                 AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
                                 MSBuildBinPath="$(MSBuildBinPath)"
+                                DebugAutoCodeFix="$(DebugAutoCodeFix)"
                                 DebugProjectReader="$(DebugProjectReader)"
                                 BuildingInsideVisualStudio="$(BuildingInsideVisualStudio)"
                                 Verbosity="$(AutoCodeFixVerbosity)" />
@@ -80,7 +81,6 @@
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
                     Language="$(Language)"
-                    DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     SkipAnalyzers="@(_SkipCodeFixAnalyzerBeforeCompile)"
                     AdditionalFiles="@(AdditionalFiles)"
@@ -187,7 +187,6 @@
     <ApplyCodeFixes ProjectFullPath="$(MSBuildProjectFullPath)"
                     AssemblySearchPath="@(AutoCodeFixAssemblySearchPath)"
                     Language="$(Language)"
-                    DebugAutoCodeFix="$(DebugAutoCodeFix)"
                     Analyzers="@(Analyzer);@(CodeFix)"
                     SkipAnalyzers="@(_SkipCodeFixAnalyzerAfterCompile)"
                     AdditionalFiles="@(AdditionalFiles)"

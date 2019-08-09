@@ -18,6 +18,11 @@ namespace AutoCodeFix
         public bool BuildingInsideVisualStudio { get; set; }
 
         /// <summary>
+        /// Whether to debug debug the task for troubleshooting purposes.
+        /// </summary>
+        public bool DebugAutoCodeFix { get; set; }
+
+        /// <summary>
         /// Whether to cause the project reader console program to launch a debugger on run 
         /// for troubleshooting purposes.
         /// </summary>
@@ -42,6 +47,9 @@ namespace AutoCodeFix
 
         public override bool Execute()
         {
+            if (DebugAutoCodeFix && !Debugger.IsAttached)
+                Debugger.Launch();
+
             if (Verbosity != null && Verbosity.Length > 0)
             {
                 if (!Enum.TryParse<LoggerVerbosity>(Verbosity, out var value))
