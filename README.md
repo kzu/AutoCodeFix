@@ -1,6 +1,10 @@
 ![Icon](https://raw.github.com/kzu/AutoCodeFix/master/icon/32.png) AutoCodeFix
 ============
 
+[![Version](https://img.shields.io/nuget/vpre/AutoCodeFix.svg)](https://www.nuget.org/packages/AutoCodeFix)
+[![Downloads](https://img.shields.io/nuget/dt/AutoCodeFix)](https://www.nuget.org/packages/AutoCodeFix)
+[![Build Status](https://dev.azure.com/kzu/oss/_apis/build/status/AutoCodeFix?branchName=master)](http://build.azdo.io/kzu/oss/19)
+
 Applies Roslyn code fixes automatically during build for the chosen "auto codefix" diagnostics, fixing 
 the code for you automatically, instead of having to manually apply code fixes in the IDE.
 
